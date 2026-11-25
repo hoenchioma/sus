@@ -27,6 +27,7 @@ interface Attachment {
 type ClientMessage =
   | { type: 'join'; name: string }
   | { type: 'rejoin'; code: string }
+  | { type: 'ping' }
   | { type: 'command'; command: Command };
 
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
@@ -70,8 +71,9 @@ export class RoomObject extends DurableObject<Env> {
       if (!att.playerId && !att.tv) continue;
       try {
         ws.send(JSON.stringify({ type: "view", now: Date.now(), view: viewFor(this.room, att.tv ? "tv" : att.playerId!) }));
-      } catch {
-        // The socket closed between listing and sending; webSocketClose cleans it up.
+      } catch (error) {
+        // A closed socket is cleaned up by webSocketClose; anything else is a bug worth seeing in the logs.
+        if (!(error instanceof TypeError)) console.error('broadcast failed', error);
       }
     }
   }
@@ -94,6 +96,8 @@ export class RoomObject extends DurableObject<Env> {
 
     const room = await this.load();
     if (!room) return json({ error: 'No room with that code' }, 404);
+    // Catch up on any timer whose alarm was missed, so activity alone keeps a room moving.
+    tick(room, this.gameEnv());
 
     if (request.headers.get('Upgrade') !== 'websocket') {
       return json({ code: room.code, phase: room.phase, players: room.members.length });
@@ -128,6 +132,12 @@ export class RoomObject extends DurableObject<Env> {
     }
     const att = (ws.deserializeAttachment() ?? { playerId: null, tv: false }) as Attachment;
     const env = this.gameEnv();
+    if (msg.type === 'ping') {
+      if (att.playerId || att.tv) ws.send(JSON.stringify({ type: 'view', now: Date.now(), view: viewFor(room, att.tv ? 'tv' : att.playerId!) }));
+      else ws.send(JSON.stringify({ type: 'pong' }));
+      return;
+    }
+    tick(room, env);
     const fail = (message: string) => ws.send(JSON.stringify({ type: 'error', message }));
 
     if (msg.type === 'join' || msg.type === 'rejoin') {

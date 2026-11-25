@@ -59,6 +59,9 @@ export interface DayProgress {
   votes: Record<PlayerId, PlayerId | 'skip'>;
   ghostVotes: Record<PlayerId, PlayerId>;
   candidates: PlayerId[];
+  /** Ghosts who have cast their one vote today (kept across the runoff). */
+  ghostsUsed: PlayerId[];
+  lastBallots: { voter: string; target: string | null; ghost?: boolean }[];
   mayorRevealed: boolean;
   tally: { player: PlayerId; votes: number }[];
   eliminated: PlayerId[];
@@ -274,12 +277,20 @@ function startNight(room: Room, env: Env) {
     const rules = rulesOf(setup);
     const active = new Map(nightPrompts(setup, state, number, rules).filter((p) => !p.disabled).map((p) => [p.key, p]));
     const inPlay = [...new Set(Object.values(setup.roles))].filter((r) => r !== 'villager');
-    for (const id of livingActive(room, state)) {
+    const living = livingActive(room, state);
+    const killers = living.filter((id) => teamOf(setup.roles[id]!) === 'mafia' && setup.roles[id] !== 'roleblocker');
+    for (const id of living) {
       const role = setup.roles[id]!;
       const key: PromptKey | undefined = teamOf(role) === 'mafia' && role !== 'roleblocker' ? 'mafia' : ROLES[role].prompt;
       const first: NightCard = key && active.has(key) ? { kind: 'action', key } : { kind: 'predictDeath' };
-      const pool = inPlay.filter((r) => r !== role);
-      const guess = pool[Math.floor(env.random() * pool.length)] ?? 'mafia';
+      // With no other Mafia left, the Roleblocker makes the kill as their second card (still two cards).
+      if (role === 'roleblocker' && killers.length === 0 && active.has('mafia')) {
+        room.night.cards[id] = [first, { kind: 'action', key: 'mafia' }];
+        continue;
+      }
+      const known = (r: RoleId) => r === role || (teamOf(role) === 'mafia' && teamOf(r) === 'mafia');
+      const pool = inPlay.filter((r) => !known(r));
+      const guess = pool[Math.floor(env.random() * pool.length)] ?? 'villager';
       room.night.cards[id] = [first, { kind: 'predictRole', role: guess }];
     }
   } else {
@@ -386,7 +397,7 @@ function finishNight(room: Room, env: Env) {
   const after = gameState(room)!;
   const rules = rulesOf(setup);
   const died = after.deaths.filter((d) => d.step === room.steps.length - 1);
-  const entries = died.map((d) => revealed(room, d.player));
+  const entries = died.map((d) => revealed(room, d.player, d.cause === 'heartbreak' ? 'heartbreak' : undefined));
   if (after.loverPartner && after.alive[after.loverPartner]) {
     entries.push({ name: memberName(room, after.loverPartner), note: 'partner' });
   }
@@ -416,6 +427,8 @@ function startDay(room: Room, env: Env) {
     votes: {},
     ghostVotes: {},
     candidates: [],
+    ghostsUsed: [],
+    lastBallots: [],
     mayorRevealed: false,
     tally: [],
     eliminated: [],
@@ -474,6 +487,10 @@ function closeVote(room: Room, env: Env) {
   const rules = rulesOf(room.setup!);
   const tally = tallyVotes(room, state);
   day.tally = tally;
+  day.lastBallots = [
+    ...Object.entries(day.votes).map(([voter, target]) => ({ voter: memberName(room, voter), target: target === 'skip' ? null : memberName(room, target) })),
+    ...Object.entries(day.ghostVotes).map(([voter, target]) => ({ voter: memberName(room, voter), target: memberName(room, target), ghost: true })),
+  ];
   const top = tally[0];
   if (!top) return finishDay(room, [], env);
   const tiedTop = tally.filter((t) => t.votes === top.votes);
@@ -486,8 +503,9 @@ function closeVote(room: Room, env: Env) {
       .sort((a, b) => b.votes - a.votes)
       .slice(0, 2)
       .map((t) => t.player);
-    if (day.candidates.length < 2) return finishDay(room, [top.player], env);
+    if (day.candidates.length < 2) return finishDay(room, [], env);
     day.stage = 'runoff';
+    day.ghostsUsed = [...new Set([...day.ghostsUsed, ...Object.keys(day.ghostVotes)])];
     day.votes = {};
     day.ghostVotes = {};
     cue(room, 'vote');
@@ -513,7 +531,7 @@ function finishDay(room: Room, eliminated: PlayerId[], env: Env) {
     kind: 'day',
     eliminated,
     mayorRevealed: day.mayorRevealed || undefined,
-    ghostVotes: Object.keys(day.ghostVotes),
+    ghostVotes: [...new Set([...day.ghostsUsed, ...Object.keys(day.ghostVotes)])],
   };
   if (Object.keys(room.pendingAdjust).length) step.adjust = room.pendingAdjust;
   room.pendingAdjust = {};
@@ -638,6 +656,7 @@ export function apply(room: Room, playerId: PlayerId, cmd: Command, env: Env): s
         const problem = actionProblem(room, state!, card.key, cmd.target);
         if (problem) return problem;
       }
+      if (card.target !== undefined && card.key !== 'mafia') return 'Already chosen';
       card.target = cmd.target;
       if (card.kind === 'action' && card.key === 'mafia') night.mafiaVotes[playerId] = cmd.target;
       afterAnswer(room, env);
@@ -674,7 +693,7 @@ export function apply(room: Room, playerId: PlayerId, cmd: Command, env: Env): s
         day.votes[playerId] = cmd.target;
       } else {
         const info = voteInfo(room.setup!, ds, rulesOf(room.setup!));
-        if (!info.ghostsAvailable.includes(playerId) || cmd.target === 'skip') return 'No vote left';
+        if (!info.ghostsAvailable.includes(playerId) || day.ghostsUsed.includes(playerId) || cmd.target === 'skip') return 'No vote left';
         day.ghostVotes[playerId] = cmd.target;
       }
       afterVote(room, env);
@@ -683,7 +702,8 @@ export function apply(room: Room, playerId: PlayerId, cmd: Command, env: Env): s
 
     case 'revealMayor': {
       const day = room.day;
-      if (!day || room.setup?.roles[playerId] !== 'mayor' || !state?.alive[playerId] || state.mayorRevealed || day.mayorRevealed) return null;
+      if (!day || !['discussion', 'vote', 'runoff'].includes(day.stage)) return 'Not now';
+      if (room.setup?.roles[playerId] !== 'mayor' || !state?.alive[playerId] || state.mayorRevealed || day.mayorRevealed) return null;
       day.mayorRevealed = true;
       announce(room, 'mayor', `${member.name} revealed their role`, [{ name: member.name, role: 'mayor' }]);
       return null;
@@ -961,6 +981,8 @@ export interface RoomView {
     totalVotes: number;
     blockedPartner: string | null;
     tally: { name: string; votes: number }[];
+    /** Who voted for whom, revealed together once a round closes. */
+    ballots: { voter: string; target: string | null; ghost?: boolean }[];
     mayorRevealed: boolean;
   } | null;
   deadline: number | null;
@@ -1016,7 +1038,7 @@ export function viewFor(room: Room, viewer: PlayerId | 'tv'): RoomView {
       teammates,
       seenRole: room.revealed.includes(me.id),
       canVote: !!info && info.voters.includes(me.id),
-      ghostVote: !!info && info.ghostsAvailable.includes(me.id) && !room.day?.ghostVotes[me.id],
+      ghostVote: !!info && info.ghostsAvailable.includes(me.id) && !room.day?.ghostVotes[me.id] && !room.day?.ghostsUsed.includes(me.id),
       myVote: room.day?.votes[me.id] ?? room.day?.ghostVotes[me.id],
       isMayor: myRole === 'mayor',
     };
@@ -1070,7 +1092,7 @@ export function viewFor(room: Room, viewer: PlayerId | 'tv'): RoomView {
       number: room.day.number,
       stage: room.day.stage,
       candidates: room.day.candidates,
-      votesCast: Object.keys(room.day.votes).length,
+      votesCast: eligibleVoters(room, dayState_).filter((id) => room.day!.votes[id] !== undefined).length,
       voters: eligibleVoters(room, dayState_).length,
       needed: info.needed,
       totalVotes: info.votes,
@@ -1078,6 +1100,7 @@ export function viewFor(room: Room, viewer: PlayerId | 'tv'): RoomView {
       tally: room.day.stage === 'result' || room.day.stage === 'runoff' || room.day.stage === 'hostPick'
         ? room.day.tally.map((t) => ({ name: memberName(room, t.player), votes: t.votes }))
         : [],
+      ballots: room.day.stage === 'vote' || room.day.stage === 'discussion' ? [] : room.day.lastBallots,
       mayorRevealed: dayState_.mayorRevealed,
     };
   }
@@ -1102,8 +1125,9 @@ export function viewFor(room: Room, viewer: PlayerId | 'tv'): RoomView {
     balance: room.phase === 'lobby' ? balance(room.settings.counts, room.settings.rules) : null,
     night,
     day,
-    deadline: room.deadline,
-    paused: room.pausedRemaining !== null,
+    // Night timers can reveal which roles are dead (fake calls), so phones and the TV never see them.
+    deadline: room.phase === 'night' ? null : room.deadline,
+    paused: room.phase === 'night' ? false : room.pausedRemaining !== null,
     announcement: room.announcement,
     cue: room.cue,
     winner: room.winner,

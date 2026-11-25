@@ -48,11 +48,21 @@ export function useRoom(code: string, as: 'player' | 'tv') {
       const ws = new WebSocket(`${proto}://${location.host}/api/rooms/${code}/ws?${params}`);
       socket.current = ws;
 
+      let lastHeard = Date.now();
+      const heartbeat = setInterval(() => {
+        if (ws.readyState !== WebSocket.OPEN) return;
+        // A socket that has gone quiet may be half-open; replace it so the phone doesn't freeze on an old screen.
+        if (Date.now() - lastHeard > 30_000) ws.close();
+        else ws.send(JSON.stringify({ type: 'ping' }));
+      }, 10_000);
+      ws.addEventListener('close', () => clearInterval(heartbeat));
       ws.onopen = () => {
         retry = 0;
       };
       ws.onmessage = (e) => {
+        lastHeard = Date.now();
         const msg = JSON.parse(e.data as string);
+        if (msg.type === 'pong') return;
         if (msg.type === 'view') {
           setView(msg.view);
           setClockOffset(msg.now - Date.now());

@@ -492,6 +492,7 @@ function NightCardPanel({ card, view, skin, send }: { card: CardView; view: Room
     return map;
   }, [view.night?.mafiaVotes]);
   const mafia = card.kind === 'action' && card.key === 'mafia';
+  const locked = !mafia && card.target !== undefined;
 
   return (
     <Card className="animate-rise">
@@ -509,7 +510,7 @@ function NightCardPanel({ card, view, skin, send }: { card: CardView; view: Room
           return (
             <button
               key={o.id}
-              disabled={!!o.disabled}
+              disabled={!!o.disabled || locked}
               onClick={() => send({ type: 'pick', card: card.index, target: o.id })}
               className={`min-h-14 rounded-2xl px-3 text-left font-extrabold ring-1 transition active:scale-95 disabled:opacity-30 ${
                 card.target === o.id ? 'bg-sky text-night-950 ring-sky' : 'bg-night-800 ring-white/5'
@@ -522,6 +523,7 @@ function NightCardPanel({ card, view, skin, send }: { card: CardView; view: Room
           );
         })}
         <button
+          disabled={locked}
           onClick={() => send({ type: 'pick', card: card.index, target: null })}
           className={`col-span-2 min-h-12 rounded-2xl font-extrabold ring-1 ${card.target === null ? 'bg-sky text-night-950 ring-sky' : 'bg-night-800 text-mist ring-white/5'}`}
         >
@@ -762,6 +764,16 @@ function Day({ view, skin, send, clockOffset }: { view: RoomView; skin: Skin; se
               <span className="tabular-nums">{t.votes}</span>
             </div>
           ))}
+          {day.ballots.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-white/5 pt-3 text-xs">
+              {day.ballots.map((b) => (
+                <span key={b.voter + (b.ghost ? 'g' : '')} className="rounded-full bg-night-800 px-2.5 py-1 font-bold text-mist">
+                  {b.ghost && '👻 '}
+                  {b.voter} → {b.target ?? 'skip'}
+                </span>
+              ))}
+            </div>
+          )}
         </Card>
       )}
 

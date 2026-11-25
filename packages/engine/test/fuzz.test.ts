@@ -105,7 +105,7 @@ function playOnline(seed: number) {
   const env = (): Env => ({ now, random: r, id: () => `p${seed}-${++n}` });
   const players = 5 + Math.floor(r() * 11);
   const room = createRoom('FUZZ', now);
-  const members = Array.from({ length: players }, (_, i) => join(room, `P${i}`, env()) as Member);
+  Array.from({ length: players }, (_, i) => join(room, `P${i}`, env()) as Member);
   const style = r() < 0.5 ? 'quick' : 'narrated';
   const rules = pick(RULE_VARIANTS, r);
   const counts = randomRoles(players, r);
@@ -153,7 +153,7 @@ function playOnline(seed: number) {
       setConnected(room, back.id, true, now);
       room.hostId = back.id;
     }
-    if (room.phase === 'over') break;
+    if ((room.phase as string) === 'over') break;
 
     const state = gameState(room);
     for (const m of room.members) {

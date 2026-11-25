@@ -139,6 +139,11 @@ function TvDay({ view, clockOffset }: { view: RoomView; clockOffset: number }) {
           ))}
         </div>
       )}
+      {day.ballots.length > 0 && (
+        <p className="max-w-[80vw] text-[1.4vw] text-mist">
+          {day.ballots.map((b) => `${b.ghost ? '👻' : ''}${b.voter} → ${b.target ?? 'skip'}`).join('   ·   ')}
+        </p>
+      )}
       <div className="flex gap-[2vw]">
         <Stat label="Alive" value={living} />
         <Stat label="Votes" value={day.totalVotes} />

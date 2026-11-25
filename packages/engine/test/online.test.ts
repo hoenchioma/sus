@@ -219,3 +219,75 @@ describe('online room: hosts and absent players', () => {
     expect(room.night?.cards[id('gu')]?.some((c) => c.target === undefined)).toBe(true);
   });
 });
+
+describe('online room: playtest regressions', () => {
+  it('locks the Detective after one check but lets the Mafia change their vote', () => {
+    const { room, id, run } = started(roles);
+    const detCard = room.night!.cards[id('di')]!.findIndex((c) => c.key === 'detective');
+    expect(run('di', { type: 'pick', card: detCard, target: id('ali') })).toBeNull();
+    expect(run('di', { type: 'pick', card: detCard, target: id('bo') })).toBe('Already chosen');
+    expect(run('ali', { type: 'pick', card: 0, target: id('ed') })).toBeNull();
+    expect(run('ali', { type: 'pick', card: 0, target: id('fa') })).toBeNull();
+  });
+
+  it('gives a lone Roleblocker the kill in a quick night', () => {
+    const { room, id } = started({ rb: 'roleblocker', cy: 'doctor', di: 'detective', ed: 'villager', fa: 'villager', gu: 'villager' });
+    expect(room.night!.cards[id('rb')]!.map((c) => c.key)).toEqual(['roleblocker', 'mafia']);
+  });
+
+  it("doesn't eliminate anyone when only one player gets votes without a majority", () => {
+    const s = started(roles, { discussionSeconds: 30 });
+    answerAll(s.room, s.run, () => null);
+    tick(s.room, env(10_000));
+    tick(s.room, env(60_000));
+    s.run('ali', { type: 'vote', target: s.id('gu') });
+    for (const n of ['bo', 'cy', 'di', 'ed', 'fa', 'gu']) s.run(n, { type: 'vote', target: 'skip' });
+    expect(s.room.day?.eliminated).toEqual([]);
+    expect(s.room.day?.stage).toBe('result');
+  });
+
+  it('never sends night timers to phones (they would reveal fake calls for dead roles)', () => {
+    const { room, id, run } = started(roles, { nightStyle: 'narrated', rules: { deathReveal: 'none' } });
+    for (const m of room.members) run(m.name, { type: 'ready' });
+    expect(viewFor(room, id('ed')).deadline).toBeNull();
+    expect(viewFor(room, 'tv').deadline).toBeNull();
+  });
+
+  it('only lets the Mayor reveal while the day is still deciding', () => {
+    const s = started({ ...roles, gu: 'mayor' }, { discussionSeconds: 30 });
+    answerAll(s.room, s.run, () => null);
+    tick(s.room, env(10_000));
+    tick(s.room, env(60_000));
+    for (const m of s.room.members) s.run(m.name, { type: 'vote', target: 'skip' });
+    expect(s.room.day?.stage).toBe('result');
+    expect(s.run('gu', { type: 'revealMayor' })).toBe('Not now');
+  });
+
+  it('reveals who voted for whom once the round closes', () => {
+    const s = started(roles, { discussionSeconds: 30 });
+    answerAll(s.room, s.run, () => null);
+    tick(s.room, env(10_000));
+    tick(s.room, env(60_000));
+    for (const n of ['ali', 'bo', 'cy', 'di']) s.run(n, { type: 'vote', target: s.id('ed') });
+    for (const n of ['ed', 'fa', 'gu']) s.run(n, { type: 'vote', target: 'skip' });
+    const ballots = viewFor(s.room, s.id('fa')).day!.ballots;
+    expect(ballots).toContainEqual({ voter: 'ali', target: 'ed' });
+    expect(ballots).toContainEqual({ voter: 'gu', target: null });
+  });
+
+  it('uses up a ghost vote even when the day goes to a runoff', () => {
+    const s = started(roles, { discussionSeconds: 30, rules: { deathReveal: 'none', deadCanTalk: true, ghostVote: true } });
+    answerAll(s.room, s.run, (name, card) => (card === 0 && (name === 'ali' || name === 'bo') ? s.id('gu') : null));
+    tick(s.room, env(10_000));
+    tick(s.room, env(60_000));
+    expect(gameState(s.room)!.alive[s.id('gu')]).toBe(false);
+    expect(s.run('gu', { type: 'vote', target: s.id('cy') })).toBeNull();
+    s.run('ali', { type: 'vote', target: s.id('cy') });
+    s.run('bo', { type: 'vote', target: s.id('di') });
+    s.run('cy', { type: 'vote', target: s.id('di') });
+    for (const n of ['di', 'ed', 'fa']) s.run(n, { type: 'vote', target: 'skip' });
+    expect(s.room.day?.stage).toBe('runoff');
+    expect(s.run('gu', { type: 'vote', target: s.id('cy') })).toBe('No vote left');
+    expect(viewFor(s.room, s.id('gu')).you?.ghostVote).toBe(false);
+  });
+});
