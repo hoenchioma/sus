@@ -32,6 +32,7 @@ describe('quest tables', () => {
   it('matches the official 5–10 player table and the house table up to 15', () => {
     expect([5, 6, 7, 8, 9, 10].map((n) => [tableFor(n).good, tableFor(n).evil])).toEqual([[3, 2], [4, 2], [4, 3], [5, 3], [6, 3], [6, 4]]);
     expect(tableFor(13).teams).toEqual([4, 4, 5, 5, 6]);
+    expect([tableFor(15).good, tableFor(15).evil]).toEqual([10, 5]);
     expect(failsNeeded(6, 4)).toBe(1);
     expect(failsNeeded(7, 4)).toBe(2);
     expect(failsNeeded(15, 4)).toBe(2);
@@ -62,7 +63,9 @@ describe('quest rules', () => {
   it('warns about the Spy below 7 players and marks 11+ as experimental', () => {
     expect(questBalance({ lady: true }, 6).warnings).toContain('ladySmall');
     expect(questBalance({}, 12).warnings).toContain('experimental');
-    expect(questBalance({ percival: true, morgana: true }, 8).score).toBe(0);
+    expect(questBalance({ percival: true, morgana: true }, 8).score).toBe(2);
+    expect(questBalance({ percival: true, morgana: true, mordred: true, oberon: true }, 10).score).toBe(4 - 2 + 0 - 6);
+    expect(questBalance({ oberon: true }, 8).warnings).toContain('oberonStrong');
   });
 });
 
@@ -125,6 +128,14 @@ describe('quest flow', () => {
     const st = replayQuest(s, steps).states.at(-1)!;
     expect(st.results.map((r) => r.winner)).toEqual(['good', 'evil', 'good', 'good']);
     expect(st.phase).toBe('guess');
+  });
+
+  it('rejects votes from anyone who is not seated', () => {
+    const s = setupWith(five);
+    let st = applyQuestStep(s, initialQuestState(s), { kind: 'propose', team: ['p0', 'p1'] });
+    expect(questStepProblem(s, st, { kind: 'vote', votes: { ...allNo(s).votes, ghost: true, ghost2: true } })).toMatch(/seated/);
+    st = applyQuestStep(s, st, allNo(s));
+    expect(st.rejections).toBe(1);
   });
 
   it('rejects a good player playing Betrayal and a wrong team size', () => {

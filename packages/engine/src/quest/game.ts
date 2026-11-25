@@ -103,6 +103,7 @@ export function questStepProblem(setup: QuestSetup, state: QuestState, step: Que
       return null;
     }
     case 'vote':
+      if (Object.keys(step.votes).some((id) => !known(id))) return 'Only seated players vote';
       return setup.players.every((p) => typeof step.votes[p.id] === 'boolean') ? null : 'Everyone must vote';
     case 'chapter': {
       const team = state.team ?? [];

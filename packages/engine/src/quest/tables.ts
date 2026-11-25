@@ -8,7 +8,8 @@ interface Table {
   teams: [number, number, number, number, number];
 }
 
-// Official table for 5–10 (identical in Avalon and Polashi); 11–15 is an unofficial house table.
+// Official table for 5–10 (identical in Avalon and Polashi); 11–15 is an unofficial house table,
+// with 14 and 15 retuned from simulated games so they play like the official 10-player game.
 export const TABLES: Record<number, Table> = {
   5: { good: 3, evil: 2, teams: [2, 3, 2, 3, 3] },
   6: { good: 4, evil: 2, teams: [2, 3, 4, 3, 4] },
@@ -19,8 +20,8 @@ export const TABLES: Record<number, Table> = {
   11: { good: 7, evil: 4, teams: [3, 4, 4, 5, 5] },
   12: { good: 7, evil: 5, teams: [3, 4, 4, 5, 5] },
   13: { good: 8, evil: 5, teams: [4, 4, 5, 5, 6] },
-  14: { good: 9, evil: 5, teams: [4, 5, 5, 6, 6] },
-  15: { good: 9, evil: 6, teams: [4, 5, 5, 6, 6] },
+  14: { good: 9, evil: 5, teams: [4, 4, 5, 5, 6] },
+  15: { good: 10, evil: 5, teams: [4, 4, 5, 5, 6] },
 };
 
 export const tableFor = (players: number): Table => {
