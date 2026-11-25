@@ -37,6 +37,8 @@ Design for Sus's second game: an Avalon-style quest game with two skins, **Polas
   - The inspected player becomes the next Spy. Nobody who has already been Spy can be inspected.
 
 ## 2b. 11–15 players (experimental house rule)
+
+> **Updated after simulation:** 14 and 15 were retuned (see `docs/quest-balance.md`); the table below reflects the current values.
 Neither Avalon nor Polashi has official rules above 10 players. We copy the table from the fan app [LesiaZ2007/avalon](https://github.com/LesiaZ2007/avalon), the only one found that covers 11–15. It keeps about a third of the table as traitors and keeps the official rule that only Chapter 4 needs 2 Betrayals. The 5-rejection limit stays.
 
 | Players | Nawab / EIC | Ch1 | Ch2 | Ch3 | Ch4 | Ch5 |
@@ -44,8 +46,8 @@ Neither Avalon nor Polashi has official rules above 10 players. We copy the tabl
 | 11 | 7 / 4 | 3 | 4 | 4 | 5★ | 5 |
 | 12 | 7 / 5 | 3 | 4 | 4 | 5★ | 5 |
 | 13 | 8 / 5 | 4 | 4 | 5 | 5★ | 6 |
-| 14 | 9 / 5 | 4 | 5 | 5 | 6★ | 6 |
-| 15 | 9 / 6 | 4 | 5 | 5 | 6★ | 6 |
+| 14 | 9 / 5 | 4 | 4 | 5 | 5★ | 6 |
+| 15 | 10 / 5 | 4 | 4 | 5 | 5★ | 6 |
 
 - **Same table for both skins.** It's plain data, so it can be tuned after playtests.
 - **Warning:** the setup screen says "Unofficial: 11+ players is a house rule".

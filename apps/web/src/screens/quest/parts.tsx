@@ -165,7 +165,7 @@ export function QuestSettingsPanel({
   const balance = quest.questBalance(rules, n);
   const { t } = text;
   const powers = ['percival', 'morgana', 'mordred', 'oberon', 'lady'] as const;
-  const warningText: Record<string, string> = { experimental: t.experimental, ladySmall: t.ladySmall, oberonSmall: t.oberonSmall };
+  const warningText: Record<string, string> = { experimental: t.experimental, ladySmall: t.ladySmall, oberonStrong: t.oberonStrong };
 
   return (
     <div className={`flex flex-col gap-3 ${text.font}`}>

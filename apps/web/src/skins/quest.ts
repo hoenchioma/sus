@@ -207,7 +207,7 @@ export interface UiText {
   rule: Record<string, string>;
   experimental: string;
   ladySmall: string;
-  oberonSmall: string;
+  oberonStrong: string;
   ritual: string;
   ritualLines: Record<string, string>;
   passTo: (name: string) => string;
@@ -279,8 +279,8 @@ const en: UiText = {
   preset: { first: 'First game', classic: 'Classic', full: 'Full' },
   rule: { percival: 'Percival', morgana: 'Morgana', mordred: 'Mordred', oberon: 'Oberon', lady: 'Spy', firstCommander: 'First Commander', anonymousVotes: 'Anonymous votes' },
   experimental: 'Unofficial: more than 10 players is a house rule.',
-  ladySmall: 'The rulebook recommends the Spy at 7+ players; it strongly helps the good side.',
-  oberonSmall: 'This power is very weak at 5–6 players.',
+  ladySmall: 'The rulebook recommends the Spy at 7+ players.',
+  oberonStrong: 'The loner helps the evil side a lot in bigger games.',
   ritual: 'Eyes-closed ritual',
   ritualLines: {
     closeEyes: 'Everyone, close your eyes and put out your fist.',
@@ -381,8 +381,8 @@ const bn: UiText = {
   preset: { first: 'প্রথম খেলা', classic: 'ক্লাসিক', full: 'সম্পূর্ণ' },
   rule: { percival: 'মোহন লাল', morgana: 'ঘষেটি বেগম', mordred: 'রায় দুর্লভ', oberon: 'উমিচাঁদ', lady: 'গুপ্তচর', firstCommander: 'প্রথম সেনাপতি', anonymousVotes: 'গোপন ভোট' },
   experimental: 'অনানুষ্ঠানিক: ১০ জনের বেশি খেলোয়াড় একটি ঘরোয়া নিয়ম।',
-  ladySmall: 'নিয়ম বই ৭+ খেলোয়াড়ে গুপ্তচর রাখতে বলে; এটি নবাব পক্ষকে অনেক সাহায্য করে।',
-  oberonSmall: '৫–৬ জন খেলোয়াড়ে এই ক্ষমতা খুব দুর্বল।',
+  ladySmall: 'নিয়ম বই ৭+ খেলোয়াড়ে গুপ্তচর রাখতে বলে।',
+  oberonStrong: 'বড় খেলায় উমিচাঁদ EIC-কে অনেক সাহায্য করে।',
   ritual: 'চোখ বন্ধের পর্ব',
   ritualLines: {
     closeEyes: 'সবাই চোখ বন্ধ করুন আর মুঠো সামনে রাখুন।',
