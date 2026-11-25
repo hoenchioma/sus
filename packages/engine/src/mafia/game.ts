@@ -147,7 +147,8 @@ export function winnerOf(setup: Setup, state: State, rules: Rules): Winner | nul
   const killerAlive = living.some((id) => roleOf(id) === 'serialKiller');
   const mafia = living.filter((id) => teamOf(roleOf(id)) === 'mafia').length;
 
-  if (killerAlive) return living.length === 1 ? 'serialKiller' : null;
+  // The Serial Killer can't lose a 1-on-1 against a non-Mafia player (they'd die tonight anyway).
+  if (killerAlive) return living.length === 1 || (living.length === 2 && mafia === 0) ? 'serialKiller' : null;
   if (mafia === 0) return 'village';
   if (mafia >= living.length - mafia) return 'mafia';
   return null;

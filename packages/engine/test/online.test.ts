@@ -231,7 +231,7 @@ describe('online room: playtest regressions', () => {
   });
 
   it('gives a lone Roleblocker the kill in a quick night', () => {
-    const { room, id } = started({ rb: 'roleblocker', cy: 'doctor', di: 'detective', ed: 'villager', fa: 'villager', gu: 'villager' });
+    const { room, id } = started({ rb: 'roleblocker', cy: 'doctor', di: 'detective', ed: 'villager', fa: 'villager', gu: 'villager' }, { rules: {} });
     expect(room.night!.cards[id('rb')]!.map((c) => c.key)).toEqual(['roleblocker', 'mafia']);
   });
 

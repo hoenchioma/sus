@@ -3,7 +3,7 @@ import { phaseOf, replay, rulesOf, voteInfo, winnerOf } from './game';
 import { detectiveResult, holdersOf, nightPrompts, targetProblem } from './night';
 import { ROLES, teamOf, type PromptKey, type RoleId, type Team } from './roles';
 import { callDeadRoles, type PresetId, type RoleCounts, type RuleChoices } from './rules';
-import { dealRoles, suggestedRoles } from './setup';
+import { dealRoles, suggestedRoles, suggestedRules } from './setup';
 import type { Adjustments, DayStep, NightActions, NightStep, PlayerId, Setup, State, Step, Winner } from './types';
 
 export type { Setup };
@@ -249,6 +249,7 @@ function syncCounts(room: Room) {
   const total = Object.values(room.settings.counts).reduce((a, b) => a + (b ?? 0), 0);
   if (total !== room.members.length && room.members.length >= 5) {
     room.settings.counts = suggestedRoles(room.members.length);
+    room.settings.rules = { ...room.settings.rules, ...suggestedRules(room.members.length) };
   }
 }
 

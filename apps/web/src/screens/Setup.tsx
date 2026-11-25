@@ -11,6 +11,7 @@ import {
   setupProblems,
   suggestFixes,
   suggestedRoles,
+  suggestedRules,
   teamOf,
   type Band,
   type PresetId,
@@ -63,7 +64,9 @@ export function SetupScreen({
   };
 
   const next = () => {
-    if (step === 0 && total !== draft.names.length) patch({ counts: suggestedRoles(draft.names.length), assigned: {} });
+    if (step === 0 && total !== draft.names.length) {
+      patch({ counts: suggestedRoles(draft.names.length), rules: { ...draft.rules, ...suggestedRules(draft.names.length) }, assigned: {} });
+    }
     if (step < STEPS.length - 1) setStep(step + 1);
     else start();
   };
@@ -319,8 +322,9 @@ export function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
         </p>
       ))}
 
-      <button className="self-start text-sm font-bold text-sky" onClick={() => patch({ counts: suggestedRoles(players), assigned: {} })}>
+      <button className="self-start text-sm font-bold text-sky" onClick={() => patch({ counts: suggestedRoles(players), rules: { ...draft.rules, ...suggestedRules(players) }, assigned: {} })}>
         Use suggested mix for {players}
+        {suggestedRules(players).noKillNight1 && ' (turns on "No kills on night 1")'}
       </button>
 
       <ul className="flex flex-col gap-2">

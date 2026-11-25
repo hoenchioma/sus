@@ -132,7 +132,9 @@ export function resolveNight(
     if (!target) continue;
     const protectable = by !== 'serialKiller' || rules.skProtectable;
 
-    if (protectable && guardTarget === target && bodyguard) {
+    // A Doctor or Lover save comes first, so a Bodyguard on the same target doesn't die for nothing.
+    const savedBy = !protectable ? undefined : doctorTarget === target ? 'doctor' : loverTarget === target ? 'lover' : undefined;
+    if (!savedBy && protectable && guardTarget === target && bodyguard) {
       events.push({ type: 'attack', by, target, outcome: 'guarded', savedBy: 'bodyguard' });
       if (doctorTarget === bodyguard) {
         events.push({ type: 'attack', by, target: bodyguard, outcome: 'saved', savedBy: 'doctor' });
@@ -143,7 +145,6 @@ export function resolveNight(
       continue;
     }
 
-    const savedBy = !protectable ? undefined : doctorTarget === target ? 'doctor' : loverTarget === target ? 'lover' : undefined;
     if (savedBy) {
       events.push({ type: 'attack', by, target, outcome: 'saved', savedBy });
     } else {
