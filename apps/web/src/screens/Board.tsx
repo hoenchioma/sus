@@ -237,7 +237,7 @@ function PromptCard({
         <RoleArt role={art} skin={skinId} dead={!prompt.alive} className="h-14 w-14 shrink-0" />
         <div className="min-w-0 flex-1">
           <div className="font-extrabold leading-tight">{skin.prompts[prompt.key]}</div>
-          <div className="truncate text-xs text-mist">{holders}</div>
+          <div className="line-clamp-2 text-xs leading-tight text-mist">{holders}</div>
         </div>
         {target !== undefined && !prompt.disabled && <span className="text-xl text-village">✓</span>}
       </div>
