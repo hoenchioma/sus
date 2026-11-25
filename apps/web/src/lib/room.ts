@@ -21,14 +21,14 @@ function saveToken(code: string, token: string) {
   }
 }
 
-export async function createRoom(): Promise<string> {
-  const res = await fetch('/api/rooms', { method: 'POST' });
+export async function createRoom(options: { game?: 'mafia' | 'quest'; skin?: string } = {}): Promise<string> {
+  const res = await fetch('/api/rooms', { method: 'POST', body: JSON.stringify(options) });
   if (!res.ok) throw new Error('Could not create a room');
   return ((await res.json()) as { code: string }).code;
 }
 
-export function useRoom(code: string, as: 'player' | 'tv') {
-  const [view, setView] = useState<RoomView | null>(null);
+export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 'tv') {
+  const [view, setView] = useState<V | null>(null);
   const [status, setStatus] = useState<Status>('connecting');
   const [error, setError] = useState<string | null>(null);
   const [clockOffset, setClockOffset] = useState(0);
@@ -111,7 +111,7 @@ export function useRoom(code: string, as: 'player' | 'tv') {
     status,
     error,
     clockOffset,
-    send: useCallback((command: Command) => sendRaw({ type: 'command', command }), [sendRaw]),
+    send: useCallback((command: C) => sendRaw({ type: 'command', command }), [sendRaw]),
     join: useCallback((name: string) => sendRaw({ type: 'join', name }), [sendRaw]),
     rejoin: useCallback((rejoinCode: string) => sendRaw({ type: 'rejoin', code: rejoinCode }), [sendRaw]),
   };
@@ -130,3 +130,9 @@ export function useSecondsLeft(deadline: number | null, clockOffset: number) {
 }
 
 export const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+
+export async function roomGame(code: string): Promise<'mafia' | 'quest' | null> {
+  const res = await fetch(`/api/rooms/${code}`);
+  if (!res.ok) return null;
+  return ((await res.json()) as { game?: 'mafia' | 'quest' }).game ?? 'mafia';
+}

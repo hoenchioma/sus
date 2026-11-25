@@ -2,9 +2,9 @@ import { useId, type ReactNode } from 'react';
 import type { RoleId } from '@sus/engine';
 import type { SkinId } from '../skins';
 
-type Eyes = 'round' | 'sly' | 'heavy' | 'squint' | 'dreamy' | 'glow' | 'shades' | 'mask' | 'side';
+export type Eyes = 'round' | 'sly' | 'heavy' | 'squint' | 'dreamy' | 'glow' | 'shades' | 'mask' | 'side';
 
-interface Look {
+export interface Look {
   body: string;
   shade: string;
   eyes: Eyes;
@@ -404,10 +404,13 @@ export function RoleArt({
   dead?: boolean;
   className?: string;
 }) {
-  const id = useId();
   const base = LOOKS[role];
-  const look = skin === 'werewolf' ? werewolfLook(role, base) : base;
+  return <CharacterSvg look={skin === 'werewolf' ? werewolfLook(role, base) : base} dead={dead} className={className} />;
+}
 
+/** The shared character template: glow, rounded body, highlight, eyes and the look's props. */
+export function CharacterSvg({ look, dead = false, className = '', crest }: { look: Look; dead?: boolean; className?: string; crest?: string }) {
+  const id = useId();
   return (
     <svg
       viewBox="0 0 120 120"
@@ -437,6 +440,12 @@ export function RoleArt({
       <EyesArt kind={look.eyes} shade={look.shade} />
       {look.wolf && snout(look.body)}
       {look.front}
+      {crest && (
+        <g transform="translate(26 92)">
+          <circle r="9" fill={crest} stroke="#ffc857" strokeWidth="2" />
+          <circle r="3.5" fill="#ffc857" />
+        </g>
+      )}
       {dead && (
         <g stroke="#1b1033" strokeWidth="3" strokeLinecap="round">
           <path d="M44 58 l10 8 M54 58 l-10 8 M66 58 l10 8 M76 58 l-10 8" />

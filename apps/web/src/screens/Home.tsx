@@ -2,17 +2,21 @@ import { useState } from 'react';
 import { RoleArt } from '../art/RoleArt';
 import { Button, Screen } from '../components/ui';
 import { createRoom } from '../lib/room';
+import { useStored } from '../lib/storage';
+import { QuestArt } from '../art/QuestArt';
 
 export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean; onContinue: () => void; onNew: () => void }) {
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [game, setGame] = useStored<'mafia' | 'quest'>('sus.homeGame', 'mafia');
+  const [questSaved] = useStored<unknown>('sus.quest.game', null);
 
   const host = async () => {
     setBusy(true);
     setError(null);
     try {
-      location.assign(`/play/${await createRoom()}`);
+      location.assign(`/play/${await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {})}`);
     } catch {
       setError('Could not reach the server. Check your connection.');
       setBusy(false);
@@ -22,15 +26,41 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
   return (
     <Screen className="justify-between">
       <div className="mt-[8vh] flex flex-col items-center text-center animate-rise">
-        <div className="relative mb-2 flex -space-x-6">
-          <RoleArt role="villager" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-2s]" />
-          <RoleArt role="mafia" className="relative z-10 h-32 w-32 animate-float" />
-          <RoleArt role="detective" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-4s]" />
-        </div>
+        {game === 'mafia' ? (
+          <div className="relative mb-2 flex -space-x-6">
+            <RoleArt role="villager" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-2s]" />
+            <RoleArt role="mafia" className="relative z-10 h-32 w-32 animate-float" />
+            <RoleArt role="detective" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-4s]" />
+          </div>
+        ) : (
+          <div className="relative mb-2 flex -space-x-6">
+            <QuestArt card="siraj" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-2s]" />
+            <QuestArt card="mirJafar" className="relative z-10 h-32 w-32 animate-float" />
+            <QuestArt card="mirMadan" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-4s]" />
+          </div>
+        )}
         <h1 className="text-7xl font-black tracking-tight">
           Sus<span className="text-mafia">.</span>
         </h1>
-        <p className="mt-3 max-w-xs text-mist">Run Mafia &amp; Werewolf nights without losing track of who did what.</p>
+        <p className="mt-3 max-w-xs text-mist">
+          {game === 'mafia' ? 'Run Mafia & Werewolf nights without losing track of who did what.' : 'Polashi and Avalon: chapters, secret votes and one last guess.'}
+        </p>
+        <div className="mt-5 flex gap-1 rounded-full bg-night-800 p-1">
+          {(
+            [
+              ['mafia', 'Mafia · Werewolf'],
+              ['quest', 'পলাশী · Avalon'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              onClick={() => setGame(id)}
+              className={`rounded-full px-4 py-2 text-sm font-extrabold transition ${game === id ? 'bg-sky text-night-950' : 'text-mist'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 animate-rise [animation-delay:120ms]">
@@ -62,16 +92,40 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
 
         <div className="rounded-card bg-night-800/70 p-4 ring-1 ring-white/5">
           <div className="mb-3 text-xs font-black uppercase tracking-widest text-haze">One phone · the host runs the night</div>
-          <div className="flex gap-2">
-            {canContinue && (
-              <Button tone="ghost" className="flex-1" onClick={onContinue}>
-                Continue
+          {game === 'mafia' ? (
+            <div className="flex gap-2">
+              {canContinue && (
+                <Button tone="ghost" className="flex-1" onClick={onContinue}>
+                  Continue
+                </Button>
+              )}
+              <Button tone={canContinue ? 'ghost' : 'primary'} className="flex-1" onClick={onNew}>
+                New tracker game
               </Button>
-            )}
-            <Button tone={canContinue ? 'ghost' : 'primary'} className="flex-1" onClick={onNew}>
-              New tracker game
-            </Button>
-          </div>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              {questSaved !== null && (
+                <Button tone="ghost" className="flex-1" onClick={() => location.assign('/quest')}>
+                  Continue
+                </Button>
+              )}
+              <Button
+                tone={questSaved !== null ? 'ghost' : 'primary'}
+                className="flex-1"
+                onClick={() => {
+                  try {
+                    localStorage.removeItem('sus.quest.game');
+                  } catch {
+                    // Starting fresh works without storage too.
+                  }
+                  location.assign('/quest');
+                }}
+              >
+                New game
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Screen>
