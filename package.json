@@ -12,7 +12,7 @@
     "typecheck": "npm run typecheck -w @sus/engine && npm run typecheck -w @sus/web && npm run typecheck -w @sus/server",
     "build": "npm run typecheck -w @sus/engine && npm run build -w @sus/web && npm run typecheck -w @sus/server",
     "test": "npm test -w @sus/engine",
-    "e2e": "node e2e/run.mjs mafia",
+    "e2e": "node e2e/run.mjs mafia polashi avalon",
     "deploy": "npm run build && npm run deploy -w @sus/server"
   },
   "devDependencies": {

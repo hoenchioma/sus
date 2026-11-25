@@ -1,9 +1,10 @@
 import { devices } from 'playwright';
 import { mkdirSync } from 'node:fs';
 
-/** A phone-sized browser page that collects uncaught page errors. */
-export async function phone(browser, errors) {
+/** A phone-sized browser page that collects uncaught page errors. `lang` presets the Polashi/Avalon language. */
+export async function phone(browser, errors, lang = 'en') {
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
+  await ctx.addInitScript((l) => localStorage.setItem('sus.lang', JSON.stringify(l)), lang);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (d) => d.accept());
