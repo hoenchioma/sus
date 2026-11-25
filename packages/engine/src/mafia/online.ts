@@ -130,6 +130,7 @@ export type Command =
 export type AdminAction =
   | { kind: 'kick'; player: PlayerId }
   | { kind: 'remove'; player: PlayerId; confirm?: boolean }
+  | { kind: 'cancelRemove' }
   | { kind: 'rejoinCode'; player: PlayerId }
   | { kind: 'transferHost'; player: PlayerId }
   | { kind: 'pause' }
@@ -390,7 +391,7 @@ function finishNight(room: Room, env: Env) {
     entries.push({ name: memberName(room, after.loverPartner), note: 'partner' });
   }
   announce(room, 'morning', died.length ? 'Not everyone woke up' : 'Everyone woke up', entries);
-  cue(room, died.length ? 'death' : 'morning');
+  cue(room, died.length ? 'dawn:death' : 'dawn');
   room.night = null;
   if (!checkWinner(room, after, rules)) startDay(room, env);
 }
@@ -527,7 +528,7 @@ function finishDay(room: Room, eliminated: PlayerId[], env: Env) {
     eliminated.length ? `${eliminated.map((id) => memberName(room, id)).join(' & ')} ${eliminated.length > 1 ? 'are' : 'is'} out` : 'Nobody was voted out',
     [...eliminated.map((id) => revealed(room, id)), ...extra.map((d) => revealed(room, d.player, 'heartbreak'))],
   );
-  cue(room, eliminated.length ? 'death' : 'morning');
+  cue(room, eliminated.length ? 'result:death' : 'result');
   if (!checkWinner(room, after, rulesOf(room.setup!))) room.deadline = env.now + RESULT_MS;
 }
 
@@ -740,10 +741,14 @@ function admin(room: Room, action: AdminAction, env: Env): string | null {
       return null;
     }
 
+    case 'cancelRemove':
+      room.confirmRemove = null;
+      return null;
+
     case 'rejoinCode': {
       const code = env.id().replace(/[^A-Z0-9]/gi, '').slice(0, 5).toUpperCase();
+      for (const [existing, id] of Object.entries(room.rejoinCodes)) if (id === action.player) delete room.rejoinCodes[existing];
       room.rejoinCodes[code] = action.player;
-      announce(room, 'host', `Rejoin code for ${memberName(room, action.player)}`, [{ name: memberName(room, action.player), note: 'code', text: code }]);
       return null;
     }
 
@@ -968,6 +973,7 @@ export interface RoomView {
   host: {
     confirmRemove: { name: string; player: PlayerId; winner: Winner } | null;
     absent: { id: PlayerId; name: string }[];
+    rejoinCodes: { code: string; name: string }[];
   } | null;
   tvConnected: boolean;
 }
@@ -1082,6 +1088,7 @@ export function viewFor(room: Room, viewer: PlayerId | 'tv'): RoomView {
           ? { ...room.confirmRemove, name: memberName(room, room.confirmRemove.player) }
           : null,
         absent: room.members.filter((m) => m.absent && (!state || state.alive[m.id])).map((m) => ({ id: m.id, name: m.name })),
+        rejoinCodes: Object.entries(room.rejoinCodes).map(([code, id]) => ({ code, name: memberName(room, id) })),
       }
     : null;
 

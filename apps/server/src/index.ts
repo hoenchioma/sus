@@ -69,7 +69,7 @@ export class RoomObject extends DurableObject<Env> {
     for (const { ws, att } of this.sockets()) {
       if (!att.playerId && !att.tv) continue;
       try {
-        ws.send(JSON.stringify({ type: 'view', view: viewFor(this.room, att.tv ? 'tv' : att.playerId!) }));
+        ws.send(JSON.stringify({ type: "view", now: Date.now(), view: viewFor(this.room, att.tv ? "tv" : att.playerId!) }));
       } catch {
         // The socket closed between listing and sending; webSocketClose cleans it up.
       }
