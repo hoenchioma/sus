@@ -35,6 +35,10 @@ describe('resolveNight', () => {
     expect(result.deaths).toEqual([{ player: 'ed', cause: 'guarding' }]);
   });
 
+  it("doesn't sacrifice the Bodyguard when the Doctor already saves the target", () => {
+    expect(dead(night(makeSetup(base), { mafia: 'gu', bodyguard: 'gu', doctor: 'gu' }))).toEqual([]);
+  });
+
   it('lets the Doctor save a Bodyguard who took the hit', () => {
     expect(dead(night(makeSetup(base), { mafia: 'gu', bodyguard: 'gu', doctor: 'ed' }))).toEqual([]);
   });

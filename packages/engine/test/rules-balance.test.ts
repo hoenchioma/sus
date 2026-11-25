@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { balance, bandOf, resolveMafiaRules, score, suggestFixes, suggestedRoles, setupProblems } from '../src';
+import { balance, bandOf, resolveMafiaRules, score, suggestFixes, suggestedRoles, suggestedRules, setupProblems } from '../src';
 
 describe('rule interactions', () => {
   it('locks dead talk and ghost votes unless nothing is revealed on death', () => {
@@ -30,7 +30,8 @@ describe('rule interactions', () => {
 
 describe('balance', () => {
   it('scores roles plus rule modifiers', () => {
-    expect(score({ mafia: 2, detective: 1, doctor: 1, villager: 4 }, {}).score).toBe(-12 + 7 + 4 + 4 + 2);
+    expect(score({ mafia: 2, detective: 1, doctor: 1, villager: 4 }, {}).score).toBe(-18 + 7 + 3 + 8 - 1);
+    expect(score({ mafia: 2, detective: 1, doctor: 1, villager: 4 }, { noKillNight1: true }).score).toBe(-1 + 4);
   });
 
   it('keeps every suggested setup balanced and valid', () => {
@@ -38,7 +39,7 @@ describe('balance', () => {
       const roles = suggestedRoles(n);
       expect(Object.values(roles).reduce((a, b) => a + (b ?? 0), 0)).toBe(n);
       expect(setupProblems(roles)).toEqual([]);
-      expect(bandOf(score(roles, {}).score)).toBe('balanced');
+      expect(bandOf(score(roles, suggestedRules(n)).score)).toBe('balanced');
     }
   });
 
@@ -50,7 +51,7 @@ describe('balance', () => {
   });
 
   it('suggests swaps that move the score toward 0 without changing the player count', () => {
-    const roles = { mafia: 1, detective: 1, doctor: 1, villager: 5 };
+    const roles = { mafia: 3, detective: 1, doctor: 1, villager: 3 };
     const before = Math.abs(score(roles, {}).score);
     const fixes = suggestFixes(roles, {});
     expect(fixes.length).toBeGreaterThan(0);
@@ -60,6 +61,7 @@ describe('balance', () => {
   it('warns about a nearly unkillable Doctor and a Jester in a both-die runoff', () => {
     const w = balance({ mafia: 2, doctor: 1, jester: 1, villager: 6 }, { protectorsAlternate: false }).warnings;
     expect(w).toContain('The Doctor is almost impossible to kill.');
+    expect(balance({ godfather: 1, mafia: 2, detective: 1, doctor: 1, villager: 3 }, {}).warnings).toContain('A single wrong elimination can hand the Mafia the game.');
     expect(w).toContain('A tied runoff that includes the Jester ends the game with a Jester win.');
   });
 });

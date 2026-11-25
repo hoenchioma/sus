@@ -38,16 +38,16 @@ export interface RoleDef {
 }
 
 export const ROLES: Record<RoleId, RoleDef> = {
-  villager: { id: 'villager', team: 'village', points: 1, unique: false },
-  mafia: { id: 'mafia', team: 'mafia', points: -6, unique: false, prompt: 'mafia' },
-  godfather: { id: 'godfather', team: 'mafia', points: -7, unique: true, prompt: 'mafia' },
-  roleblocker: { id: 'roleblocker', team: 'mafia', points: -7, unique: true, prompt: 'roleblocker', complex: true },
-  doctor: { id: 'doctor', team: 'village', points: 4, unique: true, prompt: 'doctor' },
+  villager: { id: 'villager', team: 'village', points: 2, unique: false },
+  mafia: { id: 'mafia', team: 'mafia', points: -9, unique: false, prompt: 'mafia' },
+  godfather: { id: 'godfather', team: 'mafia', points: -9, unique: true, prompt: 'mafia' },
+  roleblocker: { id: 'roleblocker', team: 'mafia', points: -10, unique: true, prompt: 'roleblocker', complex: true },
+  doctor: { id: 'doctor', team: 'village', points: 3, unique: true, prompt: 'doctor' },
   detective: { id: 'detective', team: 'village', points: 7, unique: true, prompt: 'detective' },
-  bodyguard: { id: 'bodyguard', team: 'village', points: 3, unique: true, prompt: 'bodyguard' },
-  lover: { id: 'lover', team: 'village', points: 2, unique: true, prompt: 'lover' },
-  vigilante: { id: 'vigilante', team: 'village', points: 4, unique: true, prompt: 'vigilante', complex: true },
-  mayor: { id: 'mayor', team: 'village', points: 2, unique: true },
+  bodyguard: { id: 'bodyguard', team: 'village', points: 2, unique: true, prompt: 'bodyguard' },
+  lover: { id: 'lover', team: 'village', points: 3, unique: true, prompt: 'lover' },
+  vigilante: { id: 'vigilante', team: 'village', points: 3, unique: true, prompt: 'vigilante', complex: true },
+  mayor: { id: 'mayor', team: 'village', points: 3, unique: true },
   serialKiller: { id: 'serialKiller', team: 'neutral', points: 0, unique: true, prompt: 'serialKiller', complex: true },
   jester: { id: 'jester', team: 'neutral', points: 0, unique: true, complex: true },
 };
