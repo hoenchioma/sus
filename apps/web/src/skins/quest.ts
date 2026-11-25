@@ -223,6 +223,21 @@ export interface UiText {
   firstCommander: string;
   cues: Record<string, string>;
   locked: string;
+  secs: (n: number) => string;
+  mins: (n: number) => string;
+  host: string;
+  rejoinCode: string;
+  rejoinHint: string;
+  useRejoinCode: string;
+  joinNew: string;
+  yourName: string;
+  playerName: string;
+  tvHint: string;
+  seatingNote: string;
+  newHost: (name: string) => string;
+  undone: string;
+  roomMissing: (code: string) => string;
+  home: string;
 }
 
 const en: UiText = {
@@ -311,6 +326,21 @@ const en: UiText = {
   hostPicks: 'Host picks',
   firstCommander: 'First Commander',
   locked: 'Not available with these settings',
+  secs: (n) => `${n}s`,
+  mins: (n) => `${n} min`,
+  host: 'Host',
+  rejoinCode: 'Rejoin code',
+  rejoinHint: 'Enter it on the new phone under "Use a rejoin code".',
+  useRejoinCode: 'Already in this game? Use a rejoin code',
+  joinNew: 'Join as a new player',
+  yourName: 'Your name',
+  playerName: 'Player name',
+  tvHint: 'TV screen: open this on any big screen',
+  seatingNote: 'Seating order matters: the Commander passes to the left (down this list).',
+  newHost: (name) => `${name} is now the host`,
+  undone: 'The host undid the last step',
+  roomMissing: (code) => `Room ${code} not found`,
+  home: 'Home',
   cues: {
     newCommander: 'A new Commander chooses a team.',
     vote: 'Time to vote on the team.',
@@ -413,6 +443,21 @@ const bn: UiText = {
   hostPicks: 'হোস্ট বাছবেন',
   firstCommander: 'প্রথম সেনাপতি',
   locked: 'এই সেটিংসে পাওয়া যাবে না',
+  secs: (n) => `${bd(n)} সেকেন্ড`,
+  mins: (n) => `${bd(n)} মিনিট`,
+  host: 'হোস্ট',
+  rejoinCode: 'আবার যোগ দেওয়ার কোড',
+  rejoinHint: 'নতুন ফোনে "আবার যোগ দেওয়ার কোড" থেকে এটি লিখুন।',
+  useRejoinCode: 'আগেই এই খেলায় আছেন? আবার যোগ দেওয়ার কোড ব্যবহার করুন',
+  joinNew: 'নতুন খেলোয়াড় হিসেবে যোগ দিন',
+  yourName: 'আপনার নাম',
+  playerName: 'খেলোয়াড়ের নাম',
+  tvHint: 'টিভি স্ক্রিন: যেকোনো বড় স্ক্রিনে এটি খুলুন',
+  seatingNote: 'বসার ক্রম গুরুত্বপূর্ণ: সেনাপতির দায়িত্ব বাঁ দিকে (এই তালিকার নিচের দিকে) যায়।',
+  newHost: (name) => `${name} এখন হোস্ট`,
+  undone: 'হোস্ট শেষ ধাপ বাতিল করেছেন',
+  roomMissing: (code) => `${code} রুম পাওয়া যায়নি`,
+  home: 'হোম',
   cues: {
     newCommander: 'নতুন সেনাপতি দল বাছাই করবেন।',
     vote: 'দলের উপর ভোট দেওয়ার সময়।',

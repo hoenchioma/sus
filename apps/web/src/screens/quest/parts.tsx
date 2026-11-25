@@ -11,6 +11,9 @@ export interface QuestText {
   t: UiText;
   terms: QuestTerms;
   num: (n: number) => string;
+  /** Rewrites every digit in a string (timers, codes) into Bangla digits when the language is Bangla. */
+  digits: (s: string) => string;
+  time: (seconds: number) => string;
   font: string;
 }
 
@@ -24,6 +27,11 @@ export function useQuestText(skin: QuestSkinId): QuestText {
       t: uiText(skin, lang),
       terms: questTerms(skin, lang),
       num: (n: number) => formatNumber(n, lang),
+      digits: (str: string) => (lang === 'bn' ? str.replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]!) : str),
+      time: (seconds: number) => {
+        const str = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        return lang === 'bn' ? str.replace(/[0-9]/g, (d) => '০১২৩৪৫৬৭৮৯'[Number(d)]!) : str;
+      },
       font: lang === 'bn' ? 'font-bangla' : '',
     }),
     [lang, setLang, skin],
@@ -276,15 +284,17 @@ export function SeatList({
             <button
               disabled={!onToggle}
               onClick={() => onToggle?.(p.id)}
-              className={`flex min-h-14 w-full items-center gap-2 rounded-2xl px-3 text-left font-extrabold ring-1 transition active:scale-95 disabled:active:scale-100 ${
+              className={`flex min-h-14 w-full items-center gap-1.5 rounded-2xl px-3 py-2 text-left font-extrabold ring-1 transition active:scale-95 disabled:active:scale-100 ${
                 isSelected ? 'bg-sky text-night-950 ring-sky' : team?.includes(p.id) ? 'bg-night-600 ring-sun' : 'bg-night-800 ring-white/5'
               } ${p.absent ? 'opacity-50' : ''}`}
             >
-              <span className="min-w-0 flex-1 truncate">{p.name}</span>
-              {commander === p.id && <span title={text.terms.commander}>👑</span>}
-              {team?.includes(p.id) && !onToggle && <span title={text.t.team}>⚔️</span>}
-              {spy === p.id && <span title={text.terms.spy}>🕵️</span>}
-              {spy !== p.id && pastSpies.includes(p.id) && <span className="opacity-50">🕵️</span>}
+              <span className="line-clamp-2 min-w-0 flex-1 break-words leading-tight">{p.name}</span>
+              <span className="flex shrink-0 flex-col items-center text-sm leading-none">
+                {commander === p.id && <span title={text.terms.commander}>👑</span>}
+                {team?.includes(p.id) && !onToggle && <span title={text.t.team}>⚔️</span>}
+                {spy === p.id && <span title={text.terms.spy}>🕵️</span>}
+                {spy !== p.id && pastSpies.includes(p.id) && <span className="opacity-50">🕵️</span>}
+              </span>
             </button>
           </li>
         );

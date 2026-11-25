@@ -4,7 +4,7 @@ import { quest } from '@sus/engine';
 import { QuestArt } from '../../art/QuestArt';
 import { Button } from '../../components/ui';
 import { unlockAudio, useQuestCues } from '../../lib/audio';
-import { formatTime, useRoom, useSecondsLeft } from '../../lib/room';
+import { useRoom, useSecondsLeft } from '../../lib/room';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, RejectionTrack, useQuestText, type QuestText } from './parts';
@@ -19,7 +19,7 @@ export function QuestTv({ code }: { code: string }) {
   useWakeLock();
   useQuestCues(view?.cue ?? null, { enabled: sound, skin: view?.settings.skin ?? 'polashi', lang: text.lang, lines: text.t.cues });
 
-  if (status === 'missing') return <div className="grid min-h-dvh place-items-center text-[3vw] font-black">Room {code} not found</div>;
+  if (status === 'missing') return <div className={`grid min-h-dvh place-items-center text-[3vw] font-black ${text.font}`}>{text.t.roomMissing(code)}</div>;
   if (!view) return <div className="grid min-h-dvh place-items-center text-[3vw] font-black">…</div>;
 
   return (
@@ -98,7 +98,7 @@ function Board({ view, text, clockOffset }: { view: View; text: QuestText; clock
       </div>
       <div className="flex items-center gap-[4vw]">
         <RejectionTrack count={b.rejections} text={text} big />
-        {left !== null && <span className="text-[3vw] font-black tabular-nums text-sun">{formatTime(left)}</span>}
+        {left !== null && <span className="text-[3vw] font-black tabular-nums text-sun">{text.time(left)}</span>}
       </div>
       <p className={`text-center text-[3vw] font-black ${b.phase === 'guess' ? 'text-mafia animate-pulse' : ''}`}>{status}</p>
       <ul className="flex max-w-[90vw] flex-wrap justify-center gap-[1.2vw]">
