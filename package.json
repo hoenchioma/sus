@@ -9,8 +9,13 @@
   "scripts": {
     "dev": "npm run dev -w @sus/web",
     "dev:server": "npm run build -w @sus/web && npm run dev -w @sus/server",
+    "typecheck": "npm run typecheck -w @sus/engine && npm run typecheck -w @sus/web && npm run typecheck -w @sus/server",
     "build": "npm run typecheck -w @sus/engine && npm run build -w @sus/web && npm run typecheck -w @sus/server",
     "test": "npm test -w @sus/engine",
+    "e2e": "node e2e/run.mjs mafia",
     "deploy": "npm run build && npm run deploy -w @sus/server"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
   }
 }
