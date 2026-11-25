@@ -222,6 +222,7 @@ export interface UiText {
   hostPicks: string;
   firstCommander: string;
   cues: Record<string, string>;
+  locked: string;
 }
 
 const en: UiText = {
@@ -309,6 +310,7 @@ const en: UiText = {
   random: 'Random',
   hostPicks: 'Host picks',
   firstCommander: 'First Commander',
+  locked: 'Not available with these settings',
   cues: {
     newCommander: 'A new Commander chooses a team.',
     vote: 'Time to vote on the team.',
@@ -408,6 +410,7 @@ const bn: UiText = {
   random: 'এলোমেলো',
   hostPicks: 'হোস্ট বাছবেন',
   firstCommander: 'প্রথম সেনাপতি',
+  locked: 'এই সেটিংসে পাওয়া যাবে না',
   cues: {
     newCommander: 'নতুন সেনাপতি দল বাছাই করবেন।',
     vote: 'দলের উপর ভোট দেওয়ার সময়।',
@@ -456,7 +459,12 @@ const ritualEn: Record<QuestSkinId, Partial<Record<string, string>>> = {
 
 export function uiText(skin: QuestSkinId, lang: Lang): UiText {
   if (skin === 'polashi' && lang === 'bn') return bn;
-  return { ...en, ritualLines: { ...en.ritualLines, ...ritualEn[skin] } as Record<string, string> };
+  return {
+    ...en,
+    // Avalon's side names are plural ("Minions of Mordred win").
+    wins: skin === 'avalon' ? { good: 'win', evil: 'win' } : en.wins,
+    ritualLines: { ...en.ritualLines, ...ritualEn[skin] } as Record<string, string>,
+  };
 }
 
 export const formatNumber = (n: number, lang: Lang) => new Intl.NumberFormat(lang === 'bn' ? 'bn-BD' : 'en').format(n);
