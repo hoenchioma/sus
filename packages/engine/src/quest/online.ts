@@ -39,7 +39,9 @@ export interface QuestAnnouncement {
   chapter?: number;
   spy?: string;
   target?: string;
-  text?: string;
+  /** Host events are keys so each phone shows them in its own language. */
+  hostEvent?: 'newHost' | 'undo';
+  name?: string;
 }
 
 export interface QuestRoom {
@@ -262,7 +264,7 @@ export function applyQuest(room: QuestRoom, playerId: PlayerId, cmd: QuestComman
         const next = room.members.find((m) => m.id === cmd.successor && !m.absent) ?? room.members.find((m) => m.connected && !m.absent && m.id !== playerId);
         room.hostId = next?.id ?? null;
         room.hostLostAt = null;
-        if (next) announce(room, { kind: 'host', text: `${next.name} is now the host` });
+        if (next) announce(room, { kind: 'host', hostEvent: 'newHost', name: next.name });
       }
       afterPresenceChange(room, env);
       return null;
@@ -369,7 +371,7 @@ function admin(room: QuestRoom, action: QuestAdmin, env: Env): string | null {
       if (!next) return null;
       room.hostId = next.id;
       room.hostLostAt = next.connected ? null : env.now;
-      announce(room, { kind: 'host', text: `${next.name} is now the host` });
+      announce(room, { kind: 'host', hostEvent: 'newHost', name: next.name });
       return null;
     }
     case 'pause':
@@ -409,7 +411,7 @@ function admin(room: QuestRoom, action: QuestAdmin, env: Env): string | null {
       room.steps.pop();
       room.pendingVotes = {};
       if (room.phase === 'over') room.phase = 'game';
-      announce(room, { kind: 'host', text: 'The host undid the last step' });
+      announce(room, { kind: 'host', hostEvent: 'undo' });
       return null;
     }
     case 'end':
@@ -470,7 +472,7 @@ export function tickQuest(room: QuestRoom, env: Env) {
     if (next) {
       room.hostId = next.id;
       room.hostLostAt = null;
-      announce(room, { kind: 'host', text: `${next.name} is now the host` });
+      announce(room, { kind: 'host', hostEvent: 'newHost', name: next.name });
     }
   }
   if (room.phase === 'reveal' || room.phase === 'game') {

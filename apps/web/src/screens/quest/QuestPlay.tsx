@@ -5,7 +5,7 @@ import { CardBack } from '../../art/RoleArt';
 import { QuestArt } from '../../art/QuestArt';
 import { Button, Card, Chip, HoldButton, Screen, Sheet } from '../../components/ui';
 import { unlockAudio, useQuestCues } from '../../lib/audio';
-import { formatTime, useRoom, useSecondsLeft } from '../../lib/room';
+import { useRoom, useSecondsLeft } from '../../lib/room';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, LangToggle, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
@@ -25,14 +25,14 @@ export function QuestPlay({ code }: { code: string }) {
   if (status === 'missing') {
     return (
       <Screen className="items-center justify-center text-center">
-        <h1 className="text-3xl font-black">Room {code} not found</h1>
+        <h1 className="text-3xl font-black">{text.t.roomMissing(code)}</h1>
         <Button className="mt-6" onClick={() => location.assign('/')}>
-          Home
+          {text.t.home}
         </Button>
       </Screen>
     );
   }
-  if (status === 'needJoin') return <JoinQuest code={code} onJoin={room.join} onRejoin={room.rejoin} error={room.error} />;
+  if (status === 'needJoin') return <JoinQuest code={code} text={text} onJoin={room.join} onRejoin={room.rejoin} error={room.error} />;
   if (!view?.you) {
     return (
       <Screen className="items-center justify-center">
@@ -60,11 +60,26 @@ export function QuestPlay({ code }: { code: string }) {
   );
 }
 
-function JoinQuest({ code, onJoin, onRejoin, error }: { code: string; onJoin: (n: string) => void; onRejoin: (c: string) => void; error: string | null }) {
+function JoinQuest({
+  code,
+  text,
+  onJoin,
+  onRejoin,
+  error,
+}: {
+  code: string;
+  text: QuestText;
+  onJoin: (n: string) => void;
+  onRejoin: (c: string) => void;
+  error: string | null;
+}) {
   const [name, setName] = useState('');
   const [rejoin, setRejoin] = useState(false);
   return (
-    <Screen className="justify-center">
+    <Screen className={`justify-center ${text.font}`}>
+      <div className="flex justify-end">
+        <LangToggle text={text} skin="polashi" />
+      </div>
       <div className="text-center animate-rise">
         <QuestArt card="mirMadan" className="mx-auto h-28 w-28 animate-float" />
         <h1 className="text-5xl font-black tracking-widest">{code}</h1>
@@ -80,15 +95,15 @@ function JoinQuest({ code, onJoin, onRejoin, error }: { code: string; onJoin: (n
           autoFocus
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder={rejoin ? 'Rejoin code' : 'Your name / আপনার নাম'}
+          placeholder={rejoin ? text.t.rejoinCode : text.t.yourName}
           maxLength={20}
           className="min-h-14 rounded-2xl bg-night-700 px-5 text-lg font-bold text-ink outline-none ring-1 ring-white/10 placeholder:text-haze focus:ring-sky"
         />
         <Button type="submit" className="h-14 text-lg" disabled={!name.trim()}>
-          {rejoin ? 'Rejoin' : 'Join · যোগ দিন'}
+          {text.t.join}
         </Button>
         <button type="button" className="text-sm font-bold text-sky" onClick={() => setRejoin(!rejoin)}>
-          {rejoin ? 'Join as a new player' : 'Already in this game? Use a rejoin code'}
+          {rejoin ? text.t.joinNew : text.t.useRejoinCode}
         </button>
         {error && <p className="text-center font-bold text-mafia">{error}</p>}
       </form>
@@ -131,12 +146,12 @@ function Menu({ open, onClose, view, text, send }: { open: boolean; onClose: () 
   const others = view.players.filter((p) => p.id !== you.id && !p.absent);
   const [successor, setSuccessor] = useState<string | null>(null);
   return (
-    <Sheet open={open} onClose={onClose} title={you.isHost ? 'Host' : '☰'}>
+    <Sheet open={open} onClose={onClose} title={you.isHost ? t.host : '☰'}>
       <div className={`flex flex-col gap-2 ${text.font}`}>
         {you.isHost && view.phase === 'game' && (
           <div className="grid grid-cols-2 gap-2">
             {view.paused ? <Button tone="ghost" onClick={() => admin({ kind: 'resume' })}>▶ {t.resume}</Button> : <Button tone="ghost" disabled={!view.deadline} onClick={() => admin({ kind: 'pause' })}>⏸ {t.pause}</Button>}
-            <Button tone="ghost" onClick={() => admin({ kind: 'extend' })}>+30s</Button>
+            <Button tone="ghost" onClick={() => admin({ kind: 'extend' })}>+{t.secs(30)}</Button>
             <Button tone="ghost" onClick={() => admin({ kind: 'undo' })}>↶ {t.undo}</Button>
             <Button tone="ghost" onClick={() => admin({ kind: 'skip' })}>{t.skipWaiting}</Button>
           </div>
@@ -147,7 +162,7 @@ function Menu({ open, onClose, view, text, send }: { open: boolean; onClose: () 
               <div key={p.id} className="flex items-center justify-between gap-2 py-1">
                 <span className="font-bold">{p.name}</span>
                 <Button tone="ghost" className="min-h-9 text-sm" onClick={() => admin({ kind: 'rejoinCode', player: p.id })}>
-                  Rejoin code
+                  {t.rejoinCode}
                 </Button>
               </div>
             ))}
@@ -159,10 +174,14 @@ function Menu({ open, onClose, view, text, send }: { open: boolean; onClose: () 
             ))}
           </div>
         )}
-        {you.isHost && view.phase === 'lobby' && <p className="text-sm text-mist">TV: {location.host}/tv/{view.code}</p>}
+        {you.isHost && view.phase === 'lobby' && (
+          <p className="text-sm text-mist">
+            {t.tvHint}: <span className="font-bold text-ink">{location.host}/tv/{view.code}</span>
+          </p>
+        )}
         {you.isHost && others.length > 0 && (
           <div>
-            <div className="mb-1 text-xs font-black uppercase tracking-widest text-haze">Host →</div>
+            <div className="mb-1 text-xs font-black uppercase tracking-widest text-haze">{t.host} →</div>
             <div className="flex flex-wrap gap-1.5">
               {others.map((p) => (
                 <Chip key={p.id} active={successor === p.id} onClick={() => setSuccessor(p.id)}>
@@ -246,7 +265,7 @@ function Lobby({ view, text, send }: { view: View; text: QuestText; send: Send }
             </li>
           ))}
         </ol>
-        <p className="mt-2 text-xs text-haze">Seating order matters: the Commander passes to the left (down this list).</p>
+        <p className="mt-2 text-xs text-haze">{text.t.seatingNote}</p>
       </Card>
       {you.isHost ? (
         <>
@@ -262,7 +281,7 @@ function Lobby({ view, text, send }: { view: View; text: QuestText; send: Send }
                 <Setting label={text.t.timer}>
                   {[0, 60, 120, 180, 300].map((s) => (
                     <Chip key={s} active={view.settings.discussionSeconds === s} onClick={() => configure({ discussionSeconds: s })}>
-                      {s ? `${s / 60} min` : text.t.off}
+                      {s ? text.t.mins(s / 60) : text.t.off}
                     </Chip>
                   ))}
                 </Setting>
@@ -357,7 +376,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
         <ChapterTrack teams={b.teams} doubleFail={b.doubleFail} results={b.results} chapter={b.chapter} text={text} />
         <div className="mt-3 flex items-center justify-between">
           <RejectionTrack count={b.rejections} text={text} />
-          {left !== null && <span className="font-black tabular-nums text-sun">{formatTime(left)}</span>}
+          {left !== null && <span className="font-black tabular-nums text-sun">{text.time(left)}</span>}
         </div>
       </Card>
 
@@ -524,8 +543,8 @@ function Over({ view, text, send }: { view: View; text: QuestText; send: Send })
             <li key={p.id} className="flex items-center gap-2 rounded-2xl bg-night-800 p-2">
               {p.card && <QuestArt card={p.card} className="h-10 w-10 shrink-0" />}
               <div className="min-w-0">
-                <div className="truncate text-sm font-extrabold">{p.name}</div>
-                {p.role && <div className={`truncate text-xs font-bold ${quest.sideOf(p.role) === 'good' ? 'text-village' : 'text-mafia'}`}>{cardName(p.card, text.lang)}</div>}
+                <div className="line-clamp-2 break-words text-sm font-extrabold leading-tight">{p.name}</div>
+                {p.role && <div className={`line-clamp-2 break-words text-xs font-bold leading-tight ${quest.sideOf(p.role) === 'good' ? 'text-village' : 'text-mafia'}`}>{cardName(p.card, text.lang)}</div>}
               </div>
             </li>
           ))}
@@ -551,7 +570,7 @@ export function QuestAnnouncement({ view, text, big = false }: { view: View; tex
   if (!a || hidden === a.seq || view.phase === 'lobby' || (a.kind === 'host' && big)) return null;
   const { t, terms } = text;
 
-  let body: React.ReactNode = a.text;
+  let body: React.ReactNode = a.hostEvent === 'newHost' ? t.newHost(a.name ?? '') : a.hostEvent === 'undo' ? t.undone : null;
   if (a.kind === 'vote') {
     body = (
       <>
@@ -560,9 +579,9 @@ export function QuestAnnouncement({ view, text, big = false }: { view: View; tex
           👍 {text.num(a.yes ?? 0)} · 👎 {text.num(a.no ?? 0)}
         </div>
         {a.votes && (
-          <div className={`mt-3 grid gap-2 ${big ? 'grid-cols-5' : 'grid-cols-3'}`}>
+          <div className={`mt-3 grid gap-2 ${big ? 'grid-cols-5' : 'grid-cols-2'}`}>
             {a.votes.map((v, i) => (
-              <div key={v.name} className={`rounded-xl px-2 py-1.5 text-sm font-bold animate-flip ${v.approve ? 'bg-village/20 text-village' : 'bg-mafia/20 text-mafia'}`} style={{ animationDelay: `${i * 60}ms` }}>
+              <div key={v.name} className={`break-words rounded-xl px-2 py-1.5 text-sm font-bold leading-tight animate-flip ${v.approve ? 'bg-village/20 text-village' : 'bg-mafia/20 text-mafia'}`} style={{ animationDelay: `${i * 60}ms` }}>
                 {v.approve ? '👍' : '👎'} {v.name}
               </div>
             ))}

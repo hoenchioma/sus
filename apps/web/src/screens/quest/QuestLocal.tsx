@@ -118,7 +118,7 @@ function SetupQuest({
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Player name"
+              placeholder={t.playerName}
               maxLength={20}
               className="min-h-12 flex-1 rounded-2xl bg-night-700 px-4 font-bold text-ink outline-none ring-1 ring-white/10 placeholder:text-haze focus:ring-sky"
             />
@@ -261,7 +261,7 @@ function Ritual({ setup, skin, text, onDone }: { setup: quest.QuestSetup; skin: 
       <div className="mt-6 flex flex-wrap justify-center gap-2">
         {[3, 4, 6, 8].map((s) => (
           <Chip key={s} active={pause === s} onClick={() => setPause(s)}>
-            {text.num(s)}s
+            {text.t.secs(s)}
           </Chip>
         ))}
         <Chip active={aloud} onClick={() => setAloud(!aloud)}>
@@ -563,8 +563,8 @@ function OverLocal({ setup, state, text, onExit }: { setup: quest.QuestSetup; st
             <li key={p.id} className="flex items-center gap-2 rounded-2xl bg-night-800 p-2">
               <QuestArt card={setup.cards[p.id]!} className="h-10 w-10 shrink-0" />
               <div className="min-w-0">
-                <div className="truncate text-sm font-extrabold">{p.name}</div>
-                <div className={`truncate text-xs font-bold ${quest.isGood(setup, p.id) ? 'text-village' : 'text-mafia'}`}>{cardName(setup.cards[p.id], text.lang)}</div>
+                <div className="line-clamp-2 break-words text-sm font-extrabold leading-tight">{p.name}</div>
+                <div className={`line-clamp-2 break-words text-xs font-bold leading-tight ${quest.isGood(setup, p.id) ? 'text-village' : 'text-mafia'}`}>{cardName(setup.cards[p.id], text.lang)}</div>
               </div>
             </li>
           ))}
