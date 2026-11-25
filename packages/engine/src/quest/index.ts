@@ -5,3 +5,4 @@ export * from './game';
 export * from './knowledge';
 export * from './balance';
 export * from './cards';
+export * from './online';
