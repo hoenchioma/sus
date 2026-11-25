@@ -325,26 +325,28 @@ const en: UiText = {
   },
 };
 
+const bd = (n: number) => new Intl.NumberFormat('bn-BD').format(n);
+
 const bn: UiText = {
   hostGame: 'হোস্ট',
   join: 'যোগ দিন',
   players: 'খেলোয়াড়',
   start: 'শুরু',
   dealRoles: 'চরিত্র বণ্টন করুন',
-  needPlayers: (n) => `কমপক্ষে ${n} জন খেলোয়াড় দরকার`,
+  needPlayers: (n) => `কমপক্ষে ${bd(n)} জন খেলোয়াড় দরকার`,
   holdToSee: 'আপনার চরিত্র দেখতে চেপে ধরুন',
   gotIt: 'বুঝেছি',
   waitingForOthers: 'সবার জন্য অপেক্ষা…',
   yourSide: 'আপনার পক্ষ',
   youKnow: { evil: 'এরা অন্য পক্ষের:', merlinCandidates: 'এদের একজন আপনার রক্ষা করার মিত্র:', team: 'আপনার পক্ষ:' },
   knowNothing: 'আপনি কারও আনুগত্য জানেন না।',
-  proposeTeam: (n) => `দলের জন্য ${n} জনকে বেছে নিন`,
-  proposing: (c, n) => `${c} ${n} জনের দল বাছাই করছেন`,
+  proposeTeam: (n) => `দলের জন্য ${bd(n)} জনকে বেছে নিন`,
+  proposing: (c, n) => `${c} ${bd(n)} জনের দল বাছাই করছেন`,
   proposeButton: 'এই দল প্রস্তাব করুন',
   approve: 'সমর্থন',
   reject: 'প্রত্যাখ্যান',
   voteOnTeam: 'দলের উপর ভোট দিন',
-  votesIn: (n, of) => `${of} জনের মধ্যে ${n} জন ভোট দিয়েছেন`,
+  votesIn: (n, of) => `${bd(of)} জনের মধ্যে ${bd(n)} জন ভোট দিয়েছেন`,
   teamApproved: 'দল অনুমোদিত',
   teamRejected: 'দল প্রত্যাখ্যাত',
   playCard: 'গোপনে আপনার কার্ড দিন',
