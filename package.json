@@ -1,0 +1,11 @@
+{
+  "name": "sus",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "dev": "npm run dev -w @sus/web",
+    "build": "npm run typecheck -w @sus/engine && npm run build -w @sus/web",
+    "test": "npm test -w @sus/engine"
+  }
+}
