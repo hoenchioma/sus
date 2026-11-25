@@ -229,7 +229,7 @@ export function QuestSettingsPanel({
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="font-extrabold">{role ? text.terms.roleNames[role] : text.terms.spy}</div>
-                  <div className="text-xs text-mist">{locked ? `🔒 ${status.reason}` : role ? text.terms.powers[role] : `${text.terms.spy}: ${t.spyPick}`}</div>
+                  <div className="text-xs text-mist">{locked ? `🔒 ${text.lang === 'bn' ? t.locked : status.reason}` : role ? text.terms.powers[role] : `${text.terms.spy}: ${t.spyPick}`}</div>
                 </div>
                 <span className={`h-6 w-11 shrink-0 rounded-full p-0.5 transition ${on ? 'bg-sky' : 'bg-night-600'}`}>
                   <span className={`block h-5 w-5 rounded-full bg-ink transition ${on ? 'translate-x-5' : ''}`} />
