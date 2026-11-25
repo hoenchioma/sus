@@ -26,7 +26,7 @@ For Mode 2 with hot reload, run `npm run dev:server` and `npm run dev` side by s
 
 ### Deploying (Mode 2)
 
-Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and each room is a Durable Object.
+Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and each room is a Durable Object. It's live at https://sus.example.com (the custom domain is set in `apps/server/wrangler.jsonc`).
 
 **First deploy, from your machine:**
 
@@ -35,7 +35,7 @@ npx -w @sus/server wrangler login
 npm run deploy
 ```
 
-Wrangler prints the `*.workers.dev` URL. Open it and play a quick game to check that rooms work.
+Wrangler prints the live URLs. Check them with the simulated games: `BASE_URL=https://sus.example.com node e2e/run.mjs mafia`.
 
 **After that, from GitHub:** the Deploy workflow runs only when started by hand from the Actions tab. Before using it:
 
