@@ -13,18 +13,39 @@ npm test             # engine tests
 npm run build        # typecheck + production build
 npm run dev          # web app on http://localhost:5173 (Mode 1 works on its own)
 npm run dev:server   # Mode 2: builds the web app and serves it + rooms on http://localhost:8787
+npm run typecheck    # tsc across engine, web and server
+npm run e2e          # simulated game: starts the local Worker and plays a full game with bot phones in Chromium
 ```
 
 For Mode 2 with hot reload, run `npm run dev:server` and `npm run dev` side by side; Vite proxies `/api` to the local Worker.
 
+### CI
+
+- Every push runs the typecheck.
+- Pull requests run the engine tests and the simulated game. If the simulated game fails, the phone screenshots are uploaded as an artifact.
+
 ### Deploying (Mode 2)
 
-Mode 2 runs on Cloudflare's free tier: one Worker serves the app and `/api`, and each room is a Durable Object.
+Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and each room is a Durable Object.
+
+**First deploy, from your machine:**
 
 ```bash
 npx -w @sus/server wrangler login
 npm run deploy
 ```
+
+Wrangler prints the `*.workers.dev` URL. Open it and play a quick game to check that rooms work.
+
+**After that, from GitHub:** the Deploy workflow runs only when started by hand from the Actions tab. Before using it:
+
+1. In the Cloudflare dashboard, create an API token from the "Edit Cloudflare Workers" template.
+2. Copy your account ID from the Workers overview page.
+3. Add both as repository secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+
+The workflow uses a `production` environment, so you can require an approval in the repo settings.
+
+## Layout
 
 - `packages/engine` — pure TypeScript game logic (roles, night resolution, votes, win checks, house rules, balance meter). A game is a setup plus a list of steps; state is always derived by replaying the steps, which is what makes back/forward editing safe.
 - `apps/web` — React + Vite + Tailwind PWA (Mafia and Werewolf skins, SVG character art). Routes: `/` (home + Mode 1), `/play/CODE` (player phone), `/tv/CODE` (TV dashboard).
