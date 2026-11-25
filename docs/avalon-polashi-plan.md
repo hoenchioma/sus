@@ -208,6 +208,17 @@ All characters use the Kurzgesagt template: a rounded body, big simple eyes, one
 | Ray Durlov | Maroon | Hooded shawl, in shadow |
 | Umichad | Amber red | Coin purse and goblet, wobbly pose |
 
+**Extra characters (11–15 players)**
+
+| Character | Colour | Prop |
+|---|---|---|
+| Bahadur Ali Khan | Olive green | Round dhal shield, spear, nose-guard helmet |
+| Amina Begum | Sage / mint | Prayer beads and draped shawl, soft older face |
+| Rani Bhabani | White with leaf-green border | Widow's white sari, stamped land deed with seal |
+| Jean Law | Periwinkle | Bicorne hat and pocket watch (arrived too late) |
+| Robert Clive | Scarlet with white cross-belts | Redcoat, powdered wig, rolled treaty, smug half-smile; EIC brass buttons instead of Mughal gold |
+| Jagat Seth | Copper / burnt orange | Balance scales and khata ledger, gold rings |
+
 **Pieces:** Commander crest with quill, crossed-musket team tokens, Yes/No vote tokens, flag cards, map tiles and loyalty cards.
 
 **Avalon:**
@@ -219,7 +230,6 @@ All characters use the Kurzgesagt template: a rounded body, big simple eyes, one
 
 ## 10. Deferred and open items
 - Per-player-count balance base values, including 11–15.
-- Art for the 6 extra Polashi characters.
 - Narration clip recording list, to be finalised with the script text.
 - Align file names with the real engine once `mode-1` lands.
 
