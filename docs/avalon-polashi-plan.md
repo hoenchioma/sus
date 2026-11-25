@@ -70,9 +70,8 @@ Neither Avalon nor Polashi has official rules above 10 players. We copy the tabl
 - **Skin flag:** each character's skin data has a flag saying which of these two behaviours applies.
 
 **Extra plain cards for 11–15 players (Polashi)**
-- **Nawab:** বাহাদুর আলী খান (Bahadur Ali Khan) and নৌবে সিং হাজারী (Naub Singh Hazari), commanders who fought beside Mir Madan, plus one more Nawab figure still to be picked.
+- **Nawab:** বাহাদুর আলী খান (Bahadur Ali Khan), আমিনা বেগম (Amina Begum), রানী ভবানী (Rani Bhabani) and জাঁ ল' (Jean Law). That's four cards for at most three extra seats, so the app picks at random among them.
 - **EIC:** রবার্ট ক্লাইভ (Robert Clive) and জগৎ শেঠ (Jagat Seth).
-- **Status:** these names are proposals for the user to confirm, including their Bangla spellings.
 - **Dealing:** these cards only enter the pool once the original 10 run out.
 - **Avalon:** simply uses more generic Servants and Minions.
 
@@ -220,7 +219,7 @@ All characters use the Kurzgesagt template: a rounded body, big simple eyes, one
 
 ## 10. Deferred and open items
 - Per-player-count balance base values, including 11–15.
-- Confirm the extra Polashi names (one more Nawab figure still to pick) and their art.
+- Art for the 6 extra Polashi characters.
 - Narration clip recording list, to be finalised with the script text.
 - Align file names with the real engine once `mode-1` lands.
 
