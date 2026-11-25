@@ -46,8 +46,8 @@ export function GameOver({
               <li key={p.id} className="flex items-center gap-2 rounded-2xl bg-night-800 p-2">
                 <RoleArt role={role} skin={saved.skin} dead={!final.alive[p.id]} className="h-10 w-10 shrink-0" />
                 <div className="min-w-0">
-                  <div className="truncate text-sm font-extrabold">{p.name}</div>
-                  <div className={`truncate text-xs font-bold ${TEAM_TEXT[teamOf(role)]}`}>{skin.roles[role].name}</div>
+                  <div className="line-clamp-2 break-words text-sm font-extrabold leading-tight">{p.name}</div>
+                  <div className={`line-clamp-2 break-words text-xs font-bold leading-tight ${TEAM_TEXT[teamOf(role)]}`}>{skin.roles[role].name}</div>
                 </div>
               </li>
             );

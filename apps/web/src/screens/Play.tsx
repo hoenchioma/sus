@@ -815,8 +815,8 @@ function Over({ view, skin, send }: { view: RoomView; skin: Skin; send: Send }) 
             <li key={p.id} className="flex items-center gap-2 rounded-2xl bg-night-800 p-2">
               {p.shownRole && <RoleArt role={p.shownRole} skin={skinId} dead={!p.alive} className="h-10 w-10 shrink-0" />}
               <div className="min-w-0">
-                <div className="truncate text-sm font-extrabold">{p.name}</div>
-                {p.shownRole && <div className={`truncate text-xs font-bold ${TEAM_TEXT[teamOf(p.shownRole)]}`}>{skin.roles[p.shownRole].name}</div>}
+                <div className="line-clamp-2 break-words text-sm font-extrabold leading-tight">{p.name}</div>
+                {p.shownRole && <div className={`line-clamp-2 break-words text-xs font-bold leading-tight ${TEAM_TEXT[teamOf(p.shownRole)]}`}>{skin.roles[p.shownRole].name}</div>}
               </div>
             </li>
           ))}
@@ -838,7 +838,7 @@ function Award({ icon, label, name }: { icon: string; label: string; name: strin
     <div>
       <div className="text-2xl">{icon}</div>
       <div className="text-[11px] font-bold uppercase tracking-wider text-haze">{label}</div>
-      <div className="truncate font-extrabold">{name ?? '—'}</div>
+      <div className="line-clamp-2 break-words font-extrabold leading-tight">{name ?? '—'}</div>
     </div>
   );
 }
