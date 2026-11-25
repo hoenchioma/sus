@@ -133,6 +133,10 @@ export class RoomObject extends DurableObject<Env> {
     const att = (ws.deserializeAttachment() ?? { playerId: null, tv: false }) as Attachment;
     const env = this.gameEnv();
     if (msg.type === 'ping') {
+      // Pings double as a safety net for missed alarms: catch up on overdue timers and tell everyone if anything moved.
+      const before = JSON.stringify(room);
+      tick(room, env);
+      if (JSON.stringify(room) !== before) return this.commit();
       if (att.playerId || att.tv) ws.send(JSON.stringify({ type: 'view', now: Date.now(), view: viewFor(room, att.tv ? 'tv' : att.playerId!) }));
       else ws.send(JSON.stringify({ type: 'pong' }));
       return;
