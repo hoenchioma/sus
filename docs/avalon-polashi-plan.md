@@ -37,19 +37,15 @@ Design for Sus's second game: an Avalon-style quest game with two skins, **Polas
   - The inspected player becomes the next Spy. Nobody who has already been Spy can be inspected.
 
 ## 2b. 11–15 players (experimental house rule)
-Neither Avalon nor Polashi has official rules above 10 players; the only examples found are fan apps. This table is our own, built on the official game's patterns:
-- traitors make up about 35–40% of the table;
-- teams cover 40–55% of the players;
-- bigger teams get more 2-Betrayal (★) chapters;
-- the 5-rejection limit stays.
+Neither Avalon nor Polashi has official rules above 10 players. We copy the table from the fan app [LesiaZ2007/avalon](https://github.com/LesiaZ2007/avalon), the only one found that covers 11–15. It keeps about a third of the table as traitors and keeps the official rule that only Chapter 4 needs 2 Betrayals. The 5-rejection limit stays.
 
 | Players | Nawab / EIC | Ch1 | Ch2 | Ch3 | Ch4 | Ch5 |
 |---|---|---|---|---|---|---|
 | 11 | 7 / 4 | 3 | 4 | 4 | 5★ | 5 |
-| 12 | 7 / 5 | 3 | 4 | 4 | 5★ | 6★ |
-| 13 | 8 / 5 | 4 | 4 | 5 | 6★ | 6★ |
-| 14 | 9 / 5 | 4 | 5 | 5 | 6★ | 6★ |
-| 15 | 9 / 6 | 4 | 5 | 5★ | 6★ | 7★ |
+| 12 | 7 / 5 | 3 | 4 | 4 | 5★ | 5 |
+| 13 | 8 / 5 | 4 | 4 | 5 | 5★ | 6 |
+| 14 | 9 / 5 | 4 | 5 | 5 | 6★ | 6 |
+| 15 | 9 / 6 | 4 | 5 | 5 | 6★ | 6 |
 
 - **Same table for both skins.** It's plain data, so it can be tuned after playtests.
 - **Warning:** the setup screen says "Unofficial: 11+ players is a house rule".
@@ -232,7 +228,7 @@ All characters use the Kurzgesagt template: a rounded body, big simple eyes, one
 
 - **Knowledge:** the knowledge matrix for every combination of powers.
 - **Locks:** seat-limit locks at 5, 6, 7 and 10 players, and the Ghoseti lock.
-- **11–15 players:** side sizes, chapter sizes and ★ chapters from the experimental table, and that dealing uses the extra cards only once the original 10 have run out.
+- **11–15 players:** side and chapter sizes from the experimental table (★ on Chapter 4 only), and that dealing uses the extra cards only once the original 10 have run out.
 - **Chapters:** 2-Betrayal ★ chapters.
 - **Rejections:** the 5th rejection, and that the counter resets each chapter.
 - **Commander:** rotation, including after a chapter.
