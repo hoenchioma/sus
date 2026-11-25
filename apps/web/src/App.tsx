@@ -8,6 +8,8 @@ import { SetupScreen } from './screens/Setup';
 import { Reveal } from './screens/Reveal';
 import { Board } from './screens/Board';
 import { GameOver } from './screens/GameOver';
+import { Play } from './screens/Play';
+import { Tv } from './screens/Tv';
 
 export interface Saved {
   game: Game;
@@ -41,6 +43,19 @@ export const emptyDraft: Draft = {
 };
 
 export function App() {
+  const [, kind, code] = location.pathname.match(/^\/(play|tv)\/([A-Za-z]{4})\/?$/) ?? [];
+  if (kind && code) {
+    return (
+      <>
+        <Sky />
+        {kind === 'tv' ? <Tv code={code.toUpperCase()} /> : <Play code={code.toUpperCase()} />}
+      </>
+    );
+  }
+  return <LocalApp />;
+}
+
+function LocalApp() {
   const [saved, setSaved] = useStored<Saved | null>('sus.game', null);
   const [draft, setDraft] = useStored<Draft>('sus.draft', emptyDraft);
   const [groups, setGroups] = useStored<Group[]>('sus.groups', []);
