@@ -37,11 +37,10 @@ npm run deploy
 
 Wrangler prints the live URLs. Check them with the simulated games: `BASE_URL=https://sus.raheeb.xyz node e2e/run.mjs mafia`.
 
-**After that, from GitHub:** the Deploy workflow runs only when started by hand from the Actions tab. Before using it:
+**After that, from GitHub:** every push to `main` deploys automatically, then plays the simulated games against the live site. You can also run the Deploy workflow by hand from the Actions tab. It needs two repository secrets:
 
-1. In the Cloudflare dashboard, create an API token from the "Edit Cloudflare Workers" template.
-2. Copy your account ID from the Workers overview page.
-3. Add both as repository secrets: `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+1. `CLOUDFLARE_API_TOKEN`: a token with Workers Scripts: Edit and Account Settings: Read on the account, plus Workers Routes: Edit, DNS: Edit and Zone: Read on raheeb.xyz.
+2. `CLOUDFLARE_ACCOUNT_ID`: shown on the Workers & Pages overview page.
 
 The workflow uses a `production` environment, so you can require an approval in the repo settings.
 
