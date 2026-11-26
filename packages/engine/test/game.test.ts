@@ -74,12 +74,11 @@ describe('win checks', () => {
     const rules = rulesOf(setup);
     const noMafia = finalState(setup, [{ kind: 'night', actions: { serialKiller: 'ali' } }]);
     expect(winnerOf(setup, noMafia, rules)).toBeNull();
-    const alone = finalState(setup, [
+    const oneOnOne = finalState(setup, [
       { kind: 'night', actions: { serialKiller: 'ali' } },
       { kind: 'day', eliminated: ['cy', 'di'] },
-      { kind: 'night', actions: { serialKiller: 'ed' } },
     ]);
-    expect(winnerOf(setup, alone, rules)).toBe('serialKiller');
+    expect(winnerOf(setup, oneOnOne, rules)).toBe('serialKiller');
   });
 
   it('ends the game when the Jester is voted out, unless that rule is off', () => {

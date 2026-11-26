@@ -28,7 +28,7 @@ const total = (roles: RoleCounts) => Object.values(roles).reduce((a, b) => a + (
 
 export function rolePoints(role: RoleId, rules: RuleChoices, roles: RoleCounts): number {
   const r = effectiveRules(rules, roles);
-  if (role === 'godfather' && r.godfatherInnocent) return -9;
+  if (role === 'godfather' && r.godfatherInnocent) return -11;
   return ROLES[role].points;
 }
 
@@ -43,12 +43,13 @@ export function score(roles: RoleCounts, chosen: RuleChoices): { score: number; 
     }
   }
 
+  // Weights are fitted to simulated games on a ×2 scale (a Villager is +2), so ±5 is about one Villager either way.
   const modifiers: [boolean, string, number][] = [
-    [rules.deathReveal === 'full', 'Full role reveal', 2],
-    [rules.deathReveal === 'team', 'Team-only reveal', 1],
-    [rules.noKillNight1, 'No kills on night 1', 2],
-    [count(roles, 'doctor') > 0 && rules.doctorSelf === 'always' && !rules.protectorsAlternate, 'Doctor can always self-protect', 3],
-    [rules.ghostVote, 'Ghost votes', 2],
+    [true, 'Baseline (parity rule, night-1 kills)', -1],
+    [rules.deathReveal === 'none', 'Nothing revealed on death', -2],
+    [rules.noKillNight1, 'No kills on night 1', 4],
+    [count(roles, 'doctor') > 0 && !rules.protectorsAlternate, 'Protectors can repeat targets', 6],
+    [rules.deadCanTalk, 'Dead can talk', 2],
   ];
   for (const [applies, label, points] of modifiers) if (applies) breakdown.push({ label, points });
 
@@ -56,10 +57,10 @@ export function score(roles: RoleCounts, chosen: RuleChoices): { score: number; 
 }
 
 export function bandOf(score: number): Band {
-  if (score > 8) return 'strongly-village';
-  if (score > 3) return 'leans-village';
-  if (score >= -3) return 'balanced';
-  if (score >= -8) return 'leans-mafia';
+  if (score > 12) return 'strongly-village';
+  if (score > 5) return 'leans-village';
+  if (score >= -5) return 'balanced';
+  if (score >= -12) return 'leans-mafia';
   return 'strongly-mafia';
 }
 
@@ -87,14 +88,16 @@ export function warnings(roles: RoleCounts, chosen: RuleChoices): string[] {
   if (count(roles, 'doctor') && rules.doctorSelf === 'always' && !rules.protectorsAlternate) {
     out.push('The Doctor is almost impossible to kill.');
   }
-  if (rules.deathReveal === 'full' && !count(roles, 'godfather') && !count(roles, 'roleblocker') && total(roles) >= 7) {
-    out.push('Full reveals favour the Village. Consider a Godfather or Roleblocker.');
-  }
   if (neutralThreat(roles, chosen) === 'very-high') {
     out.push('The neutral roles will likely dominate this game.');
   }
   if (count(roles, 'jester') && count(roles, 'serialKiller') && total(roles) <= 8) {
     out.push('Two neutral roles in a small game.');
+  }
+  const mafiaTeam = ROLE_IDS.filter((r) => teamOf(r) === 'mafia').reduce((a, r) => a + count(roles, r), 0);
+  const n = total(roles);
+  if (mafiaTeam >= 2 && Math.min(Math.ceil((n - 1 - 2 * mafiaTeam) / 2), Math.ceil((n - 2 * mafiaTeam) / 2)) <= 1 && !rules.noKillNight1) {
+    out.push('A single wrong elimination can hand the Mafia the game.');
   }
   if (count(roles, 'jester') && rules.tieBreak === 'bothDie') {
     out.push('A tied runoff that includes the Jester ends the game with a Jester win.');

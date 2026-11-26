@@ -6,3 +6,5 @@ export * from './mafia/night';
 export * from './mafia/game';
 export * from './mafia/balance';
 export * from './mafia/setup';
+export * from './mafia/online';
+export * as quest from './quest';

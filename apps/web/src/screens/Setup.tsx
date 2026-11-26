@@ -11,6 +11,7 @@ import {
   setupProblems,
   suggestFixes,
   suggestedRoles,
+  suggestedRules,
   teamOf,
   type Band,
   type PresetId,
@@ -63,7 +64,9 @@ export function SetupScreen({
   };
 
   const next = () => {
-    if (step === 0 && total !== draft.names.length) patch({ counts: suggestedRoles(draft.names.length), assigned: {} });
+    if (step === 0 && total !== draft.names.length) {
+      patch({ counts: suggestedRoles(draft.names.length), rules: { ...draft.rules, ...suggestedRules(draft.names.length) }, assigned: {} });
+    }
     if (step < STEPS.length - 1) setStep(step + 1);
     else start();
   };
@@ -104,7 +107,7 @@ export function SetupScreen({
   );
 }
 
-type Patch = (p: Partial<Draft>) => void;
+export type Patch = (p: Partial<Draft>) => void;
 
 function Players({ draft, patch, groups, setGroups }: { draft: Draft; patch: Patch; groups: Group[]; setGroups: Dispatch<SetStateAction<Group[]>> }) {
   const [name, setName] = useState('');
@@ -207,7 +210,7 @@ const BAND_TEXT: Record<Band, { label: string; color: string; pos: number }> = {
 
 const THREAT_TEXT: Record<ThreatLevel, string> = { none: '', medium: 'Medium', high: 'High', 'very-high': 'Very high' };
 
-function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
+export function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
   const skin = SKINS[draft.skin];
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [undo, setUndo] = useState<RoleCounts | null>(null);
@@ -319,8 +322,9 @@ function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
         </p>
       ))}
 
-      <button className="self-start text-sm font-bold text-sky" onClick={() => patch({ counts: suggestedRoles(players), assigned: {} })}>
+      <button className="self-start text-sm font-bold text-sky" onClick={() => patch({ counts: suggestedRoles(players), rules: { ...draft.rules, ...suggestedRules(players) }, assigned: {} })}>
         Use suggested mix for {players}
+        {suggestedRules(players).noKillNight1 && ' (turns on "No kills on night 1")'}
       </button>
 
       <ul className="flex flex-col gap-2">
@@ -354,7 +358,7 @@ function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
   );
 }
 
-function RulesStep({ draft, patch }: { draft: Draft; patch: Patch }) {
+export function RulesStep({ draft, patch }: { draft: Draft; patch: Patch }) {
   const resolved = useMemo(() => resolveMafiaRules(draft.rules, draft.counts), [draft.rules, draft.counts]);
 
   return (
