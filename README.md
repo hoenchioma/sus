@@ -14,7 +14,7 @@ npm run build        # typecheck + production build
 npm run dev          # web app on http://localhost:5173 (Mode 1 works on its own)
 npm run dev:server   # Mode 2: builds the web app and serves it + rooms on http://localhost:8787
 npm run typecheck    # tsc across engine, web and server
-npm run e2e          # simulated game: starts the local Worker and plays a full game with bot phones in Chromium
+npm run e2e          # simulated games (Mafia, Polashi, Avalon): starts the local Worker and plays full games with bot phones in Chromium
 ```
 
 For Mode 2 with hot reload, run `npm run dev:server` and `npm run dev` side by side; Vite proxies `/api` to the local Worker.
@@ -22,7 +22,7 @@ For Mode 2 with hot reload, run `npm run dev:server` and `npm run dev` side by s
 ### CI
 
 - Every push runs the typecheck.
-- Pull requests run the engine tests and the simulated game. If the simulated game fails, the phone screenshots are uploaded as an artifact.
+- Pull requests run the engine tests and the simulated games. Run one on its own with `node e2e/run.mjs polashi`. If the simulated game fails, the phone screenshots are uploaded as an artifact.
 
 ### Deploying (Mode 2)
 

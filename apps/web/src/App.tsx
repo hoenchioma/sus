@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { newGame, type Game, type PresetId, type RoleCounts, type RoleId, type RuleChoices } from '@sus/engine';
 import { Sky } from './components/ui';
 import { useStored } from './lib/storage';
@@ -10,6 +10,10 @@ import { Board } from './screens/Board';
 import { GameOver } from './screens/GameOver';
 import { Play } from './screens/Play';
 import { Tv } from './screens/Tv';
+import { QuestPlay } from './screens/quest/QuestPlay';
+import { QuestTv } from './screens/quest/QuestTv';
+import { QuestLocal } from './screens/quest/QuestLocal';
+import { roomGame } from './lib/room';
 
 export interface Saved {
   game: Game;
@@ -48,11 +52,30 @@ export function App() {
     return (
       <>
         <Sky />
-        {kind === 'tv' ? <Tv code={code.toUpperCase()} /> : <Play code={code.toUpperCase()} />}
+        <RoomGate code={code.toUpperCase()} tv={kind === 'tv'} />
+      </>
+    );
+  }
+  if (location.pathname === '/quest') {
+    return (
+      <>
+        <Sky />
+        <QuestLocal />
       </>
     );
   }
   return <LocalApp />;
+}
+
+/** Asks the server which game a room is before loading that game's screens. */
+function RoomGate({ code, tv }: { code: string; tv: boolean }) {
+  const [game, setGame] = useState<'mafia' | 'quest' | null | undefined>(undefined);
+  useEffect(() => {
+    roomGame(code).then(setGame).catch(() => setGame(null));
+  }, [code]);
+  if (game === undefined) return null;
+  if (game === 'quest') return tv ? <QuestTv code={code} /> : <QuestPlay code={code} />;
+  return tv ? <Tv code={code} /> : <Play code={code} />;
 }
 
 function LocalApp() {

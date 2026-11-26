@@ -75,3 +75,55 @@ export function useCues(cue: { seq: number; id: string } | null, skin: Skin, opt
     if (opts.narrated) narrate(cue.id, skin);
   }, [cue, skin, opts.enabled, opts.narrated]);
 }
+
+const QUEST_SOUNDS: Record<string, keyof typeof SOUNDS> = {
+  newCommander: 'vote',
+  vote: 'vote',
+  approved: 'morning',
+  rejected: 'death',
+  chapterWon: 'morning',
+  chapterLost: 'death',
+  spy: 'night',
+  lastChance: 'night',
+  goodWins: 'win',
+  evilWins: 'win',
+};
+
+function speakIn(text: string, lang: 'en' | 'bn') {
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  const voice = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang === 'bn' ? 'bn' : 'en'));
+  if (voice) u.voice = voice;
+  u.lang = lang === 'bn' ? 'bn-BD' : 'en-GB';
+  u.rate = 0.95;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+/** Sound effects plus short spoken phase announcements for quest games (no player names spoken). */
+export function useQuestCues(
+  cue: { seq: number; id: string } | null,
+  opts: { enabled: boolean; skin: string; lang: 'en' | 'bn'; lines: Record<string, string> },
+) {
+  const last = useRef<number | null>(null);
+  useEffect(() => {
+    if (!cue || last.current === cue.seq) return;
+    const first = last.current === null;
+    last.current = cue.seq;
+    if (first || !opts.enabled) return;
+    const sound = QUEST_SOUNDS[cue.id];
+    if (sound) SOUNDS[sound]!();
+    const text = opts.lines[cue.id];
+    if (!text) return;
+    const clip = new Audio(`/audio/${opts.skin}/${opts.lang}/${cue.id}.mp3`);
+    clip.onerror = () => speakIn(text, opts.lang);
+    clip.play().catch(() => speakIn(text, opts.lang));
+  }, [cue, opts.enabled, opts.skin, opts.lang, opts.lines]);
+}
+
+/** Reads one line aloud (Mode 1 ritual), preferring a shipped clip. */
+export function sayLine(skin: string, lang: 'en' | 'bn', id: string, text: string) {
+  const clip = new Audio(`/audio/${skin}/${lang}/${id}.mp3`);
+  clip.onerror = () => speakIn(text, lang);
+  clip.play().catch(() => speakIn(text, lang));
+}

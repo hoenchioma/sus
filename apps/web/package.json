@@ -9,6 +9,7 @@
     "preview": "vite preview --host"
   },
   "dependencies": {
+    "@fontsource-variable/baloo-da-2": "^5.3.0",
     "@fontsource-variable/nunito": "^5.3.0",
     "@sus/engine": "*",
     "qrcode": "^1.5.4",
