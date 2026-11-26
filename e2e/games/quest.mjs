@@ -43,7 +43,9 @@ export async function playQuest(browser, base, artifacts, { skin, players: count
 
     const propose = page.getByRole('button', { name: /Propose this team|প্রস্তাব করুন/ });
     if (await visible(propose)) {
-      const need = bengaliToNumber((await propose.innerText()).match(/\/(\d+|[০-৯]+)\)/)?.[1] ?? '0');
+      const label = await propose.innerText({ timeout: 2000 }).catch(() => null);
+      if (!label) return false;
+      const need = bengaliToNumber(label.match(/\/(\d+|[০-৯]+)\)/)?.[1] ?? '0');
       const seats = page.locator('ul.grid li button');
       const order = [...Array(await seats.count()).keys()].sort(() => Math.random() - 0.5);
       for (const k of order.slice(0, need)) await tap(seats.nth(k));
