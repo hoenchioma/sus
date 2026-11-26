@@ -36,6 +36,7 @@ const games = {
 
 interface Env {
   ROOMS: DurableObjectNamespace<RoomObject>;
+  PAIRS: DurableObjectNamespace<PairObject>;
   ASSETS: Fetcher;
 }
 
@@ -299,6 +300,37 @@ export class RoomObject extends DurableObject<Env> {
   }
 }
 
+/**
+ * Lets a TV join a room without typing an address: the TV shows a short code and waits here on a
+ * socket, and the host's phone sends the room code to it. Nothing is stored.
+ */
+export class PairObject extends DurableObject<Env> {
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('Upgrade') === 'websocket') {
+      const pair = new WebSocketPair();
+      if (this.ctx.getWebSockets().length) {
+        // Another TV is already showing this code; it picks a fresh one.
+        pair[1].accept();
+        pair[1].send(JSON.stringify({ type: 'taken' }));
+        pair[1].close(4009, 'code taken');
+      } else {
+        this.ctx.acceptWebSocket(pair[1]);
+      }
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+    const { room } = (await request.json().catch(() => ({}))) as { room?: string };
+    if (!room || !/^[A-Z]{4}$/.test(room)) return json({ error: 'Bad room code' }, 400);
+    const tvs = this.ctx.getWebSockets();
+    if (!tvs.length) return json({ error: 'No TV is showing that code' }, 404);
+    for (const ws of tvs) ws.send(JSON.stringify({ type: 'paired', room }));
+    return json({ ok: true });
+  }
+
+  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
+    if (message === 'ping') ws.send('pong');
+  }
+}
+
 function newCode() {
   return Array.from({ length: 4 }, () => CODE_LETTERS[Math.floor(Math.random() * CODE_LETTERS.length)]).join('');
 }
@@ -317,6 +349,12 @@ export default {
         if (res.status === 503) return res;
       }
       return json({ error: 'Could not create a room, try again' }, 503);
+    }
+
+    const pairing = url.pathname.match(/^\/api\/pair\/(\d{4})(\/ws)?$/);
+    if (pairing) {
+      const stub = env.PAIRS.get(env.PAIRS.idFromName(pairing[1]!));
+      return stub.fetch(new Request('https://pair/', request));
     }
 
     const match = url.pathname.match(/^\/api\/rooms\/([A-Za-z]{4})(\/ws)?$/);

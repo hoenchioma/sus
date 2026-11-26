@@ -15,6 +15,7 @@ import { QuestTv } from './screens/quest/QuestTv';
 import { QuestLocal } from './screens/quest/QuestLocal';
 import { formatClock, QuotaError, roomGame } from './lib/room';
 import { QuotaNotice } from './components/Quota';
+import { TvPair } from './screens/TvPair';
 
 export interface Saved {
   game: Game;
@@ -54,6 +55,14 @@ export function App() {
       <>
         <Sky />
         <RoomGate code={code.toUpperCase()} tv={kind === 'tv'} />
+      </>
+    );
+  }
+  if (/^\/tv\/?$/.test(location.pathname)) {
+    return (
+      <>
+        <Sky />
+        <TvPair />
       </>
     );
   }

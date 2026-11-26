@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import { quest } from '@sus/engine';
 import { QuestArt } from '../../art/QuestArt';
 import { Button } from '../../components/ui';
-import { unlockAudio, useQuestCues } from '../../lib/audio';
+import { inTvApp, unlockAudio, useQuestCues } from '../../lib/audio';
 import { formatClock, useRoom, useSecondsLeft } from '../../lib/room';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
@@ -15,7 +15,7 @@ type View = quest.QuestRoomView;
 export function QuestTv({ code }: { code: string }) {
   const { view, status, clockOffset, quotaResetAt, storageFullUntil } = useRoom<View, quest.QuestCommand>(code, 'tv');
   const text = useQuestText(view?.settings.skin ?? 'polashi');
-  const [sound, setSound] = useState(false);
+  const [sound, setSound] = useState(() => inTvApp && (unlockAudio() || true));
   useWakeLock();
   useQuestCues(view?.cue ?? null, { enabled: sound, skin: view?.settings.skin ?? 'polashi', lang: text.lang, lines: text.t.cues });
 

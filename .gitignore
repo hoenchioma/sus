@@ -8,3 +8,4 @@ playwright-report
 .DS_Store
 e2e-artifacts
 .env
+apps/web/public/tv.apk

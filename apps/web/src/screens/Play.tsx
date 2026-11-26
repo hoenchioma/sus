@@ -8,6 +8,7 @@ import { unlockAudio, useCues } from '../lib/audio';
 import { promptName } from '../lib/describe';
 import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
 import { QuotaNotice, StorageBanner } from '../components/Quota';
+import { CONNECT_TV_EN, ConnectTv } from '../components/ConnectTv';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
 import { Roles, RulesStep } from './Setup';
@@ -331,6 +332,8 @@ function Lobby({ view, send }: { view: RoomView; send: Send }) {
           <div className="truncate text-xs text-mist">{location.host}/play/{view.code}</div>
         </div>
       </Card>
+
+      {you.isHost && !view.tvConnected && <ConnectTv room={view.code} text={CONNECT_TV_EN} />}
 
       <Card>
         <div className="mb-3 flex items-baseline justify-between">

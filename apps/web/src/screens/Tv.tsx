@@ -4,7 +4,7 @@ import { teamOf, type RoomView } from '@sus/engine';
 import { RoleArt } from '../art/RoleArt';
 import { AnnouncementCard } from '../components/Announcement';
 import { Button, TEAM_TEXT } from '../components/ui';
-import { unlockAudio, useCues } from '../lib/audio';
+import { inTvApp, unlockAudio, useCues } from '../lib/audio';
 import { promptName } from '../lib/describe';
 import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
 import { useWakeLock } from '../lib/wakeLock';
@@ -12,7 +12,7 @@ import { SKINS, type Skin, type SkinId } from '../skins';
 
 export function Tv({ code }: { code: string }) {
   const { view, status, clockOffset, quotaResetAt, storageFullUntil } = useRoom(code, 'tv');
-  const [sound, setSound] = useState(false);
+  const [sound, setSound] = useState(() => inTvApp && (unlockAudio() || true));
   const skin = SKINS[(view?.settings.skin as SkinId) ?? 'mafia'];
   useWakeLock();
   useCues(view?.cue ?? null, skin, { enabled: sound, narrated: view?.settings.nightStyle === 'narrated' });

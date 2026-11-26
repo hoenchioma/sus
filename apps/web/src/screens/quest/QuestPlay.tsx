@@ -7,6 +7,7 @@ import { Button, Card, Chip, HoldButton, Screen, Sheet } from '../../components/
 import { unlockAudio, useQuestCues } from '../../lib/audio';
 import { formatClock, useRoom, useSecondsLeft } from '../../lib/room';
 import { QuotaNotice, StorageBanner } from '../../components/Quota';
+import { ConnectTv } from '../../components/ConnectTv';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, LangToggle, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
@@ -252,6 +253,7 @@ function Lobby({ view, text, send }: { view: View; text: QuestText; send: Send }
           <div className="text-xs text-mist">{location.host}/play/{view.code}</div>
         </div>
       </Card>
+      {you.isHost && !view.tvConnected && <ConnectTv room={view.code} text={text.t.connectTv} />}
       <Card>
         <div className="mb-2 flex justify-between text-xs font-black uppercase tracking-widest text-haze">
           <span>{text.t.players}</span>

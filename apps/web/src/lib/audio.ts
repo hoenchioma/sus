@@ -3,6 +3,16 @@ import type { PromptKey } from '@sus/engine';
 import type { Skin } from '../skins';
 import { promptName } from './describe';
 
+declare global {
+  interface Window {
+    /** Set by the Sus Fire TV app: Android's web view can't speak, so the app lends the TV's own voice. */
+    SusTv?: { speak(text: string, lang: string): void };
+  }
+}
+
+/** True inside the Fire TV app, which allows sound without a tap and speaks through the TV. */
+export const inTvApp = typeof window !== 'undefined' && !!window.SusTv;
+
 let ctx: AudioContext | null = null;
 
 export function unlockAudio() {
@@ -44,6 +54,7 @@ function narrationText(cueId: string, skin: Skin): string | null {
 }
 
 function speak(text: string) {
+  if (window.SusTv) return window.SusTv.speak(text, 'en');
   if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(text);
   u.rate = 0.92;
@@ -90,6 +101,7 @@ const QUEST_SOUNDS: Record<string, keyof typeof SOUNDS> = {
 };
 
 function speakIn(text: string, lang: 'en' | 'bn') {
+  if (window.SusTv) return window.SusTv.speak(text, lang);
   if (!('speechSynthesis' in window)) return;
   const u = new SpeechSynthesisUtterance(text);
   const voice = speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(lang === 'bn' ? 'bn' : 'en'));
