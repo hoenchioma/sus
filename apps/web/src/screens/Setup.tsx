@@ -24,7 +24,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { Draft, Group } from '../App';
 import { RoleArt } from '../art/RoleArt';
 import { Button, Card, Chip, Screen, TEAM_TEXT } from '../components/ui';
-import { SKINS, type SkinId } from '../skins';
+import { SKINS, type Skin, type SkinId } from '../skins';
 
 const STEPS = ['Players', 'Roles', 'Rules', 'Deal'] as const;
 
@@ -200,12 +200,12 @@ function Players({ draft, patch, groups, setGroups }: { draft: Draft; patch: Pat
   );
 }
 
-const BAND_TEXT: Record<Band, { label: string; color: string; pos: number }> = {
-  'strongly-village': { label: 'Strongly Village', color: 'text-village', pos: 95 },
-  'leans-village': { label: 'Leans Village', color: 'text-village', pos: 75 },
-  balanced: { label: 'Balanced', color: 'text-sun', pos: 50 },
-  'leans-mafia': { label: 'Leans Mafia', color: 'text-mafia', pos: 25 },
-  'strongly-mafia': { label: 'Strongly Mafia', color: 'text-mafia', pos: 5 },
+const BAND_TEXT: Record<Band, { label: (teams: Skin['teams']) => string; color: string; pos: number }> = {
+  'strongly-village': { label: (t) => `Strongly ${t.village}`, color: 'text-village', pos: 95 },
+  'leans-village': { label: (t) => `Leans ${t.village}`, color: 'text-village', pos: 75 },
+  balanced: { label: () => 'Balanced', color: 'text-sun', pos: 50 },
+  'leans-mafia': { label: (t) => `Leans ${t.mafia}`, color: 'text-mafia', pos: 25 },
+  'strongly-mafia': { label: (t) => `Strongly ${t.mafia}`, color: 'text-mafia', pos: 5 },
 };
 
 const THREAT_TEXT: Record<ThreatLevel, string> = { none: '', medium: 'Medium', high: 'High', 'very-high': 'Very high' };
@@ -252,7 +252,7 @@ export function Roles({ draft, patch }: { draft: Draft; patch: Patch }) {
       <Card className="!p-4">
         <button className="w-full text-left" onClick={() => setShowBreakdown(!showBreakdown)} aria-expanded={showBreakdown}>
           <div className="flex items-baseline justify-between">
-            <span className={`text-lg font-black ${band.color}`}>{band.label}</span>
+            <span className={`text-lg font-black ${band.color}`}>{band.label(skin.teams)}</span>
             <span className="font-black tabular-nums text-mist">
               {b.score > 0 ? '+' : ''}
               {b.score}
