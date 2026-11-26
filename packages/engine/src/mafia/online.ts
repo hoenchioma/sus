@@ -870,7 +870,10 @@ function afterPresenceChange(room: Room, env: Env) {
 
 export function nextAlarm(room: Room): number | null {
   const times = [room.deadline];
-  if (room.hostId && room.hostLostAt !== null) times.push(room.hostLostAt + HOST_GRACE_MS);
+  // Handing the host over needs someone connected to take it; when everyone has left, a reconnect does it instead.
+  if (room.hostId && room.hostLostAt !== null && room.members.some((m) => m.connected && !m.absent && m.id !== room.hostId)) {
+    times.push(room.hostLostAt + HOST_GRACE_MS);
+  }
   if (room.phase !== 'lobby' && room.phase !== 'over') {
     for (const m of room.members) if (!m.connected && !m.absent) times.push(m.lastSeen + ABSENT_AFTER_MS);
   }

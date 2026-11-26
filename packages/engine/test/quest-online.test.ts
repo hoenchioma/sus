@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { quest, type Env, type Member } from '../src';
 
-const { applyQuest, createQuestRoom, joinQuest, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
+const { applyQuest, createQuestRoom, joinQuest, questNextAlarm, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
 type QuestRoom = quest.QuestRoom;
 
 function rng(seed: number) {
@@ -109,6 +109,11 @@ describe('quest room', () => {
   });
 });
 
+/** A timer still due after a tick would make the server's alarm fire again straight away, forever. */
+function expectNoOverdueAlarm(due: number | null, now: number) {
+  if (due !== null && due <= now) throw new Error(`alarm overdue after tick: due ${due}, now ${now}`);
+}
+
 describe('fuzz: quest rooms', () => {
   const GAMES = Number(process.env.FUZZ_GAMES ?? 40);
   const RULES: quest.QuestRuleChoices[] = [{}, { percival: true, morgana: true }, { percival: true, morgana: true, mordred: true, oberon: true, lady: true }, { lady: true, anonymousVotes: true }];
@@ -122,6 +127,7 @@ describe('fuzz: quest rooms', () => {
     while (r.phase !== 'over' && loops++ < 3000) {
       advance(Math.floor(random() * 3000));
       tickQuest(r, env());
+      expectNoOverdueAlarm(questNextAlarm(r), env().now);
       const roll = random();
       const someone = pick(members);
       if (roll < 0.02) setQuestConnected(r, someone.id, false, env().now);
@@ -157,6 +163,13 @@ describe('fuzz: quest rooms', () => {
       }
       if (r.phase === 'game' && random() < 0.02) applyQuest(r, r.hostId!, { type: 'admin', action: { kind: 'skip' } }, env());
     }
+    // The end of every real game: all phones close and nobody comes back for a long time.
+    for (const m of members) setQuestConnected(r, m.id, false, env().now);
+    for (const later of [60_000, 10 * 60_000, 24 * 3600_000]) {
+      advance(later);
+      tickQuest(r, env());
+      expectNoOverdueAlarm(questNextAlarm(r), env().now);
+    }
     if (r.phase !== 'over') throw new Error(`seed ${seed} stuck: ${JSON.stringify(questRoomState(r)?.phase)}`);
     return questRoomState(r)!.reason;
   }
@@ -165,4 +178,22 @@ describe('fuzz: quest rooms', () => {
     const reasons = Array.from({ length: GAMES }, (_, i) => play(i + 1));
     expect(new Set(reasons).size).toBeGreaterThan(2);
   }, 300_000);
+});
+
+describe('quest room timers', () => {
+  it('does not keep an overdue host-handover alarm when everyone has left', () => {
+    const { r, members, env, advance } = room(5);
+    for (const m of members) setQuestConnected(r, m.id, false, 0);
+    advance(10 * 60_000);
+    tickQuest(r, env());
+    // Nobody can take over, so there is nothing to wake up for; an overdue alarm here used to fire in a loop.
+    const due = questNextAlarm(r);
+    expect(due === null || due > 10 * 60_000).toBe(true);
+
+    const host = r.hostId;
+    setQuestConnected(r, members[3]!.id, true, 10 * 60_000);
+    tickQuest(r, env());
+    expect(r.hostId).not.toBe(host);
+    expect(r.hostId).toBe(members[3]!.id);
+  });
 });

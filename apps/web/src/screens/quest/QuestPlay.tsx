@@ -5,7 +5,8 @@ import { CardBack } from '../../art/RoleArt';
 import { QuestArt } from '../../art/QuestArt';
 import { Button, Card, Chip, HoldButton, Screen, Sheet } from '../../components/ui';
 import { unlockAudio, useQuestCues } from '../../lib/audio';
-import { useRoom, useSecondsLeft } from '../../lib/room';
+import { formatClock, useRoom, useSecondsLeft } from '../../lib/room';
+import { QuotaNotice, StorageBanner } from '../../components/Quota';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, LangToggle, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
@@ -32,6 +33,17 @@ export function QuestPlay({ code }: { code: string }) {
       </Screen>
     );
   }
+  if (status === 'quota') {
+    return (
+      <QuotaNotice
+        className={text.font}
+        title={text.t.quotaTitle}
+        body={text.t.quotaBody(formatClock(room.quotaResetAt ?? Date.now(), text.lang))}
+        action={text.t.onePhone}
+        onAction={() => location.assign('/quest')}
+      />
+    );
+  }
   if (status === 'needJoin') return <JoinQuest code={code} text={text} onJoin={room.join} onRejoin={room.rejoin} error={room.error} />;
   if (!view?.you) {
     return (
@@ -45,6 +57,7 @@ export function QuestPlay({ code }: { code: string }) {
     <Screen className={text.font}>
       <Header view={view} text={text} send={room.send} sound={sound} setSound={setSound} />
       <div className="flex flex-1 flex-col gap-3">
+        {room.storageFullUntil && <StorageBanner>{text.t.quotaBanner(formatClock(room.storageFullUntil, text.lang))}</StorageBanner>}
         {view.phase === 'lobby' && <Lobby view={view} text={text} send={room.send} />}
         {view.phase === 'reveal' && <Reveal view={view} text={text} send={room.send} />}
         {view.phase === 'game' && <Game view={view} text={text} send={room.send} clockOffset={room.clockOffset} />}

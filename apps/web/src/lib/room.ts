@@ -1,7 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Command, RoomView } from '@sus/engine';
 
-type Status = 'connecting' | 'needJoin' | 'live' | 'missing';
+type Status = 'connecting' | 'needJoin' | 'live' | 'missing' | 'quota';
+
+/** The server's free daily storage allowance is used up; phone games work again at `resetAt`. */
+export class QuotaError extends Error {
+  constructor(readonly resetAt: number) {
+    super('Server storage quota used up');
+  }
+}
+
+async function quotaFrom(res: Response): Promise<QuotaError | null> {
+  if (res.status !== 503) return null;
+  const body = (await res.json().catch(() => ({}))) as { error?: string; resetAt?: number };
+  return body.error === 'quota' ? new QuotaError(body.resetAt ?? Date.now()) : null;
+}
+
+/** A clock time in the viewer's own timezone, with Bangla digits for Bangla. */
+export const formatClock = (at: number, lang: 'en' | 'bn' = 'en') =>
+  new Date(at).toLocaleTimeString(lang === 'bn' ? 'bn-BD' : [], { hour: 'numeric', minute: '2-digit' });
 
 const tokenKey = (code: string) => `sus.token.${code}`;
 
@@ -23,6 +40,8 @@ function saveToken(code: string, token: string) {
 
 export async function createRoom(options: { game?: 'mafia' | 'quest'; skin?: string } = {}): Promise<string> {
   const res = await fetch('/api/rooms', { method: 'POST', body: JSON.stringify(options) });
+  const quota = await quotaFrom(res);
+  if (quota) throw quota;
   if (!res.ok) throw new Error('Could not create a room');
   return ((await res.json()) as { code: string }).code;
 }
@@ -32,6 +51,8 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
   const [status, setStatus] = useState<Status>('connecting');
   const [error, setError] = useState<string | null>(null);
   const [clockOffset, setClockOffset] = useState(0);
+  const [quotaResetAt, setQuotaResetAt] = useState<number | null>(null);
+  const [storageFullUntil, setStorageFullUntil] = useState<number | null>(null);
   const socket = useRef<WebSocket | null>(null);
 
   useEffect(() => {
@@ -66,7 +87,13 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
         if (msg.type === 'view') {
           setView(msg.view);
           setClockOffset(msg.now - Date.now());
+          setStorageFullUntil(msg.storageFullUntil ?? null);
           setStatus('live');
+        } else if (msg.type === 'quota') {
+          // Reconnecting can't help until the quota resets, so stop trying.
+          closed = true;
+          setQuotaResetAt(msg.resetAt);
+          setStatus('quota');
         } else if (msg.type === 'needJoin') {
           setStatus('needJoin');
         } else if (msg.type === 'joined') {
@@ -83,9 +110,13 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
       };
     };
 
-    fetch(`/api/rooms/${code}`).then((res) => {
+    fetch(`/api/rooms/${code}`).then(async (res) => {
       if (closed) return;
-      if (res.status === 404) setStatus('missing');
+      const quota = await quotaFrom(res);
+      if (quota) {
+        setQuotaResetAt(quota.resetAt);
+        setStatus('quota');
+      } else if (res.status === 404) setStatus('missing');
       else connect();
     });
 
@@ -111,6 +142,8 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
     status,
     error,
     clockOffset,
+    quotaResetAt,
+    storageFullUntil,
     send: useCallback((command: C) => sendRaw({ type: 'command', command }), [sendRaw]),
     join: useCallback((name: string) => sendRaw({ type: 'join', name }), [sendRaw]),
     rejoin: useCallback((rejoinCode: string) => sendRaw({ type: 'rejoin', code: rejoinCode }), [sendRaw]),
@@ -133,6 +166,8 @@ export const formatTime = (s: number) => `${Math.floor(s / 60)}:${String(s % 60)
 
 export async function roomGame(code: string): Promise<'mafia' | 'quest' | null> {
   const res = await fetch(`/api/rooms/${code}`);
+  const quota = await quotaFrom(res);
+  if (quota) throw quota;
   if (!res.ok) return null;
   return ((await res.json()) as { game?: 'mafia' | 'quest' }).game ?? 'mafia';
 }

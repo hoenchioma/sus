@@ -12,6 +12,7 @@ import {
   phaseOf,
   replay,
   rulesOf,
+  nextAlarm,
   setConnected,
   setStep,
   setupProblems,
@@ -98,6 +99,11 @@ function checkViews(room: Room) {
   expect(tv.host).toBeNull();
 }
 
+/** A timer still due after a tick would make the server's alarm fire again straight away, forever. */
+function expectNoOverdueAlarm(due: number | null, now: number) {
+  if (due !== null && due <= now) throw new Error(`alarm overdue after tick: due ${due}, now ${now}`);
+}
+
 function playOnline(seed: number) {
   const r = rng(seed);
   let now = 1_000;
@@ -128,6 +134,7 @@ function playOnline(seed: number) {
   while (room.phase !== 'over' && loops++ < 4000) {
     now += Math.floor(r() * 2500);
     tick(room, env());
+    expectNoOverdueAlarm(nextAlarm(room), now);
 
     // Chaos: drops, reconnects, the host leaving, removals and Mayor reveals.
     const roll = r();
@@ -194,6 +201,13 @@ function playOnline(seed: number) {
     const deaths = gameState(room)?.deaths.length ?? 0;
     expect(deaths).toBeGreaterThanOrEqual(lastDeaths);
     lastDeaths = deaths;
+  }
+
+  // The end of every real game: all phones close and nobody comes back for a long time.
+  for (const m of room.members) setConnected(room, m.id, false, now);
+  for (const later of [60_000, 10 * 60_000, 24 * 3600_000]) {
+    tick(room, { ...env(), now: now + later });
+    expectNoOverdueAlarm(nextAlarm(room), now + later);
   }
 
   if (room.phase !== 'over') {

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RoleArt } from '../art/RoleArt';
 import { Button, Screen } from '../components/ui';
-import { createRoom } from '../lib/room';
+import { createRoom, formatClock, QuotaError } from '../lib/room';
 import { useStored } from '../lib/storage';
 import { QuestArt } from '../art/QuestArt';
 
@@ -17,8 +17,12 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
     setError(null);
     try {
       location.assign(`/play/${await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {})}`);
-    } catch {
-      setError('Could not reach the server. Check your connection.');
+    } catch (e) {
+      setError(
+        e instanceof QuotaError
+          ? `Phone games are paused until ${formatClock(e.resetAt)}: today's free server allowance is used up. One-phone games below still work.`
+          : 'Could not reach the server. Check your connection.',
+      );
       setBusy(false);
     }
   };
