@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { quest, type Env, type Member } from '../src';
 
-const { applyQuest, createQuestRoom, joinQuest, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
+const { applyQuest, createQuestRoom, joinQuest, questNextAlarm, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
 type QuestRoom = quest.QuestRoom;
 
 function rng(seed: number) {
@@ -165,4 +165,22 @@ describe('fuzz: quest rooms', () => {
     const reasons = Array.from({ length: GAMES }, (_, i) => play(i + 1));
     expect(new Set(reasons).size).toBeGreaterThan(2);
   }, 300_000);
+});
+
+describe('quest room timers', () => {
+  it('does not keep an overdue host-handover alarm when everyone has left', () => {
+    const { r, members, env, advance } = room(5);
+    for (const m of members) setQuestConnected(r, m.id, false, 0);
+    advance(10 * 60_000);
+    tickQuest(r, env());
+    // Nobody can take over, so there is nothing to wake up for; an overdue alarm here used to fire in a loop.
+    const due = questNextAlarm(r);
+    expect(due === null || due > 10 * 60_000).toBe(true);
+
+    const host = r.hostId;
+    setQuestConnected(r, members[3]!.id, true, 10 * 60_000);
+    tickQuest(r, env());
+    expect(r.hostId).not.toBe(host);
+    expect(r.hostId).toBe(members[3]!.id);
+  });
 });

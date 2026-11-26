@@ -69,11 +69,18 @@ export class RoomObject extends DurableObject<Env> {
     return this.room;
   }
 
-  private async save() {
+  private async save({ afterAlarm = false } = {}) {
     if (!this.room) return;
     this.room.tvConnected = this.sockets().some(({ att }) => att.tv);
     await this.ctx.storage.put('room', this.room);
-    const alarms = [games.alarm(this.room), this.everyoneGone() ? Date.now() + ROOM_TTL_MS : null].filter((t): t is number => t !== null);
+    let due = games.alarm(this.room);
+    if (afterAlarm && due !== null && due <= Date.now()) {
+      // The alarm just ran and the timer is still overdue, so another alarm can't move it either.
+      // Rescheduling would loop forever and burn the storage write quota; drop it and leave a trace instead.
+      console.error('room timer stuck after alarm', { code: this.room.code, phase: this.room.phase, due });
+      due = null;
+    }
+    const alarms = [due, this.everyoneGone() ? Date.now() + ROOM_TTL_MS : null].filter((t): t is number => t !== null);
     if (alarms.length) await this.ctx.storage.setAlarm(Math.max(Date.now() + 50, Math.min(...alarms)));
     else await this.ctx.storage.deleteAlarm();
   }
@@ -205,7 +212,8 @@ export class RoomObject extends DurableObject<Env> {
       return;
     }
     games.tick(room, this.gameEnv());
-    await this.commit();
+    await this.save({ afterAlarm: true });
+    this.broadcast();
   }
 }
 

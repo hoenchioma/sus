@@ -4,6 +4,7 @@ import {
   createRoom,
   gameState,
   join,
+  nextAlarm,
   setConnected,
   tick,
   viewFor,
@@ -193,6 +194,20 @@ describe('online room: hosts and absent players', () => {
     expect(room.hostId).toBe(members[0]!.id);
     tick(room, env(HOST_GRACE_MS));
     expect(room.hostId).toBe(members[1]!.id);
+  });
+
+  it('does not keep an overdue host-handover alarm when everyone has left', () => {
+    const { room, members } = lobby(['ali', 'bo', 'cy']);
+    for (const m of members) setConnected(room, m.id, false, 0);
+    // Nobody can take over, so there is nothing to wake up for; an overdue alarm here used to fire in a loop.
+    tick(room, env(HOST_GRACE_MS * 10));
+    expect(nextAlarm(room)).toBeNull();
+
+    setConnected(room, members[2]!.id, true, HOST_GRACE_MS * 10);
+    expect(nextAlarm(room)).toBe(HOST_GRACE_MS);
+    tick(room, env(HOST_GRACE_MS * 10));
+    expect(room.hostId).toBe(members[2]!.id);
+    expect(nextAlarm(room)).toBeNull();
   });
 
   it('lets a leaving host pick a successor', () => {
