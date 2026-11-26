@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Sus</string>
+    <string name="keeps_crashing">Sus keeps crashing on this TV.\nRestart the app, or open the TV screen in the Silk browser instead.</string>
 </resources>

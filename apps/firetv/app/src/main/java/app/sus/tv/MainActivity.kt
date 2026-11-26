@@ -7,26 +7,36 @@ import android.os.Bundle
 import android.speech.tts.TextToSpeech
 import android.view.WindowManager
 import android.webkit.JavascriptInterface
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.TextView
+import android.view.Gravity
+import android.os.SystemClock
 import java.util.Locale
 
 /** Shows the Sus TV screen full-screen. The web page does everything; this only gives it a voice and keeps the TV awake. */
 class MainActivity : Activity() {
-    private lateinit var web: WebView
+    private var web: WebView? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
     private val home = Uri.parse(BuildConfig.SUS_URL)
+    private val crashes = ArrayDeque<Long>()
 
-    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        // Lets chrome://inspect (or adb + DevTools) look inside the page on debug builds only.
+        WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
         tts = TextToSpeech(this) { status -> ttsReady = status == TextToSpeech.SUCCESS }
+        showSite(savedInstanceState)
+    }
 
-        web = WebView(this).apply {
+    @SuppressLint("SetJavaScriptEnabled")
+    private fun showSite(savedInstanceState: Bundle? = null) {
+        val web = WebView(this).apply {
             setBackgroundColor(0xFF0B1026.toInt())
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
@@ -41,8 +51,21 @@ class MainActivity : Activity() {
                 override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
                     if (request.isForMainFrame) showOffline()
                 }
+
+                // Fire TV sticks are short on memory; if Android kills the page's renderer, start the page
+                // again instead of letting the whole app crash.
+                override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
+                    view.destroy()
+                    val now = SystemClock.elapsedRealtime()
+                    crashes.addLast(now)
+                    while (crashes.first() < now - 60_000) crashes.removeFirst()
+                    // A page that keeps crashing would otherwise reload forever.
+                    if (crashes.size > 3) showStuck() else showSite()
+                    return true
+                }
             }
         }
+        this.web = web
         setContentView(web)
 
         if (savedInstanceState == null || web.restoreState(savedInstanceState) == null) web.loadUrl("${BuildConfig.SUS_URL}/tv")
@@ -50,19 +73,31 @@ class MainActivity : Activity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        web.saveState(outState)
+        web?.saveState(outState)
     }
 
     /** Back leaves a game for the pairing screen, and only exits the app from there. */
     @Deprecated("Still the simplest hook for the remote's Back button on every Fire OS version")
     override fun onBackPressed() {
-        if (web.canGoBack()) web.goBack() else super.onBackPressed()
+        val web = web
+        if (web != null && web.canGoBack()) web.goBack() else super.onBackPressed()
     }
 
     override fun onDestroy() {
         tts?.shutdown()
-        web.destroy()
+        web?.destroy()
         super.onDestroy()
+    }
+
+    private fun showStuck() {
+        web = null
+        setContentView(TextView(this).apply {
+            gravity = Gravity.CENTER
+            setBackgroundColor(0xFF0B1026.toInt())
+            setTextColor(0xFFEEF1FF.toInt())
+            textSize = 28f
+            setText(R.string.keeps_crashing)
+        })
     }
 
     private fun showOffline() {
@@ -73,7 +108,7 @@ class MainActivity : Activity() {
               <script>setTimeout(function () { location.href = '$retry'; }, 5000);</script>
             </body>
         """.trimIndent()
-        web.loadDataWithBaseURL(BuildConfig.SUS_URL, page, "text/html", "utf-8", null)
+        web?.loadDataWithBaseURL(BuildConfig.SUS_URL, page, "text/html", "utf-8", null)
     }
 
     /** Android's web view has no speech synthesis, so the page speaks through the TV's own voice instead. */
