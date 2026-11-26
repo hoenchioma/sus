@@ -6,18 +6,19 @@ import { AnnouncementCard } from '../components/Announcement';
 import { Button, TEAM_TEXT } from '../components/ui';
 import { unlockAudio, useCues } from '../lib/audio';
 import { promptName } from '../lib/describe';
-import { formatTime, useRoom, useSecondsLeft } from '../lib/room';
+import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
 
 export function Tv({ code }: { code: string }) {
-  const { view, status, clockOffset } = useRoom(code, 'tv');
+  const { view, status, clockOffset, quotaResetAt, storageFullUntil } = useRoom(code, 'tv');
   const [sound, setSound] = useState(false);
   const skin = SKINS[(view?.settings.skin as SkinId) ?? 'mafia'];
   useWakeLock();
   useCues(view?.cue ?? null, skin, { enabled: sound, narrated: view?.settings.nightStyle === 'narrated' });
 
   if (status === 'missing') return <Centered>Room {code} not found</Centered>;
+  if (status === 'quota') return <Centered>Phone games are paused until {formatClock(quotaResetAt ?? Date.now())}: today's free server allowance is used up.</Centered>;
   if (!view) return <Centered>Connecting…</Centered>;
 
   return (
@@ -32,6 +33,11 @@ export function Tv({ code }: { code: string }) {
           </Button>
         )}
       </header>
+      {storageFullUntil && (
+        <p className="mt-[1vw] rounded-2xl bg-sun/15 px-[2vw] py-[0.8vw] text-center text-[1.4vw] font-bold text-sun">
+          {`The server can't save games until ${formatClock(storageFullUntil)}. This game keeps going, but if every phone drops it may be lost.`}
+        </p>
+      )}
       <main className="flex flex-1 flex-col items-center justify-center">
         {view.phase === 'lobby' && <TvLobby view={view} />}
         {view.phase === 'reveal' && <Big title="Check your role" sub="Hold your card to peek. Keep it secret." />}

@@ -52,6 +52,17 @@ type ClientMessage =
   | { type: 'command'; command: unknown };
 
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
+
+/** On Cloudflare's free plan, every storage call throws this once the day's write allowance is used up. */
+const isQuotaError = (e: unknown) => e instanceof Error && /exceeded allowed .* durable objects free tier/i.test(e.message);
+
+/** The daily allowance resets at midnight UTC. */
+function quotaResetsAt() {
+  const d = new Date();
+  return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + 1);
+}
+
+const quotaResponse = () => json({ error: 'quota', resetAt: quotaResetsAt() }, 503);
 const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
 const json = (data: unknown, status = 200) =>
@@ -59,6 +70,8 @@ const json = (data: unknown, status = 200) =>
 
 export class RoomObject extends DurableObject<Env> {
   private room: AnyRoom | null = null;
+  /** Set while saves fail on the daily quota: the room keeps running from memory and players are warned. */
+  private storageFull = false;
 
   private gameEnv(): GameEnv {
     return { now: Date.now(), random: Math.random, id: () => crypto.randomUUID() };
@@ -72,6 +85,18 @@ export class RoomObject extends DurableObject<Env> {
   private async save({ afterAlarm = false } = {}) {
     if (!this.room) return;
     this.room.tvConnected = this.sockets().some(({ att }) => att.tv);
+    try {
+      await this.writeRoom(afterAlarm);
+      this.storageFull = false;
+    } catch (error) {
+      if (!isQuotaError(error)) throw error;
+      if (!this.storageFull) console.warn('storage quota used up; room continues from memory', { code: this.room.code });
+      this.storageFull = true;
+    }
+  }
+
+  private async writeRoom(afterAlarm: boolean) {
+    if (!this.room) return;
     await this.ctx.storage.put('room', this.room);
     let due = games.alarm(this.room);
     if (afterAlarm && due !== null && due <= Date.now()) {
@@ -98,12 +123,21 @@ export class RoomObject extends DurableObject<Env> {
     for (const { ws, att } of this.sockets()) {
       if (!att.playerId && !att.tv) continue;
       try {
-        ws.send(JSON.stringify({ type: 'view', now: Date.now(), view: games.view(this.room, att.tv ? 'tv' : att.playerId!) }));
+        ws.send(JSON.stringify(this.viewMessage(att)));
       } catch (error) {
         // A closed socket is cleaned up by webSocketClose; anything else is a bug worth seeing in the logs.
         if (!(error instanceof TypeError)) console.error('broadcast failed', error);
       }
     }
+  }
+
+  private viewMessage(att: Attachment) {
+    return {
+      type: 'view',
+      now: Date.now(),
+      view: games.view(this.room!, att.tv ? 'tv' : att.playerId!),
+      storageFullUntil: this.storageFull ? quotaResetsAt() : null,
+    };
   }
 
   private async commit() {
@@ -112,6 +146,21 @@ export class RoomObject extends DurableObject<Env> {
   }
 
   async fetch(request: Request): Promise<Response> {
+    try {
+      return await this.handle(request);
+    } catch (error) {
+      if (!isQuotaError(error)) throw error;
+      // The room couldn't even be read, so there is nothing to keep running; tell the client plainly.
+      if (request.headers.get('Upgrade') !== 'websocket') return quotaResponse();
+      const pair = new WebSocketPair();
+      pair[1].accept();
+      pair[1].send(JSON.stringify({ type: 'quota', resetAt: quotaResetsAt() }));
+      pair[1].close(4003, 'storage quota');
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+  }
+
+  private async handle(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
     if (url.pathname === '/init') {
@@ -119,6 +168,11 @@ export class RoomObject extends DurableObject<Env> {
       const { code, game, skin } = (await request.json()) as { code: string; game?: string; skin?: quest.QuestSkinId };
       this.room = game === 'quest' ? quest.createQuestRoom(code, Date.now(), skin) : createRoom(code, Date.now());
       await this.save();
+      if (this.storageFull) {
+        // A brand-new room living only in memory would vanish the moment its last phone dropped.
+        this.room = null;
+        return quotaResponse();
+      }
       return json({ code });
     }
 
@@ -150,6 +204,20 @@ export class RoomObject extends DurableObject<Env> {
   }
 
   async webSocketMessage(ws: WebSocket, raw: string | ArrayBuffer) {
+    try {
+      await this.handleMessage(ws, raw);
+    } catch (error) {
+      if (isQuotaError(error)) {
+        ws.send(JSON.stringify({ type: 'quota', resetAt: quotaResetsAt() }));
+        ws.close(4003, 'storage quota');
+        return;
+      }
+      console.error('message failed', error);
+      ws.send(JSON.stringify({ type: 'error', message: 'Something went wrong on the server. Try that again.' }));
+    }
+  }
+
+  private async handleMessage(ws: WebSocket, raw: string | ArrayBuffer) {
     const room = await this.load();
     if (!room || typeof raw !== 'string') return;
     let msg: ClientMessage;
@@ -165,7 +233,7 @@ export class RoomObject extends DurableObject<Env> {
       const before = JSON.stringify(room);
       games.tick(room, env);
       if (JSON.stringify(room) !== before) return this.commit();
-      if (att.playerId || att.tv) ws.send(JSON.stringify({ type: 'view', now: Date.now(), view: games.view(room, att.tv ? 'tv' : att.playerId!) }));
+      if (att.playerId || att.tv) ws.send(JSON.stringify(this.viewMessage(att)));
       else ws.send(JSON.stringify({ type: 'pong' }));
       return;
     }
@@ -195,7 +263,10 @@ export class RoomObject extends DurableObject<Env> {
   }
 
   private async disconnect(ws: WebSocket) {
-    const room = await this.load();
+    const room = await this.load().catch((error) => {
+      if (isQuotaError(error)) return null;
+      throw error;
+    });
     if (!room) return;
     const att = (ws.deserializeAttachment() ?? { playerId: null, tv: false }) as Attachment;
     const stillOpen = this.sockets().some((s) => s.ws !== ws && s.att.playerId && s.att.playerId === att.playerId);
@@ -204,6 +275,17 @@ export class RoomObject extends DurableObject<Env> {
   }
 
   async alarm() {
+    try {
+      await this.runAlarm();
+    } catch (error) {
+      // Throwing would make Cloudflare retry the alarm, which only fails again until the quota resets.
+      // Connected phones keep timers moving through their pings meanwhile.
+      if (!isQuotaError(error)) throw error;
+      console.warn('alarm skipped: storage quota used up');
+    }
+  }
+
+  private async runAlarm() {
     const room = await this.load();
     if (!room) return;
     if (this.everyoneGone() && Math.max(room.createdAt, ...room.members.map((m) => m.lastSeen)) + ROOM_TTL_MS <= Date.now()) {
@@ -232,6 +314,7 @@ export default {
         const stub = env.ROOMS.get(env.ROOMS.idFromName(code));
         const res = await stub.fetch('https://room/init', { method: 'POST', body: JSON.stringify({ ...options, code }) });
         if (res.ok) return json({ code });
+        if (res.status === 503) return res;
       }
       return json({ error: 'Could not create a room, try again' }, 503);
     }

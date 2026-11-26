@@ -237,6 +237,10 @@ export interface UiText {
   newHost: (name: string) => string;
   undone: string;
   roomMissing: (code: string) => string;
+  quotaTitle: string;
+  quotaBody: (time: string) => string;
+  quotaBanner: (time: string) => string;
+  onePhone: string;
   home: string;
 }
 
@@ -340,6 +344,10 @@ const en: UiText = {
   newHost: (name) => `${name} is now the host`,
   undone: 'The host undid the last step',
   roomMissing: (code) => `Room ${code} not found`,
+  quotaTitle: 'Phone games are paused',
+  quotaBody: (time) => `Today's free server allowance is used up. Phone games work again at ${time}. Meanwhile you can still play on one phone.`,
+  quotaBanner: (time) => `The server can't save games until ${time}. This game keeps going, but if every phone drops it may be lost.`,
+  onePhone: 'Play on one phone',
   home: 'Home',
   cues: {
     newCommander: 'A new Commander chooses a team.',
@@ -457,6 +465,10 @@ const bn: UiText = {
   newHost: (name) => `${name} এখন হোস্ট`,
   undone: 'হোস্ট শেষ ধাপ বাতিল করেছেন',
   roomMissing: (code) => `${code} রুম পাওয়া যায়নি`,
+  quotaTitle: 'ফোনে খেলা আপাতত বন্ধ',
+  quotaBody: (time) => `আজকের ফ্রি সার্ভারের সীমা শেষ। ${time}-এ ফোনে খেলা আবার চালু হবে। এর মধ্যে এক ফোনে খেলা যাবে।`,
+  quotaBanner: (time) => `${time} পর্যন্ত সার্ভার খেলা সেভ করতে পারবে না। খেলা চলছে, কিন্তু সবার কানেকশন কেটে গেলে খেলাটা হারিয়ে যেতে পারে।`,
+  onePhone: 'এক ফোনে খেলুন',
   home: 'হোম',
   cues: {
     newCommander: 'নতুন সেনাপতি দল বাছাই করবেন।',

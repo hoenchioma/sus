@@ -6,7 +6,8 @@ import { CardBack, RoleArt } from '../art/RoleArt';
 import { Button, Card, Chip, HoldButton, Screen, Sheet, TEAM_TEXT } from '../components/ui';
 import { unlockAudio, useCues } from '../lib/audio';
 import { promptName } from '../lib/describe';
-import { formatTime, useRoom, useSecondsLeft } from '../lib/room';
+import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
+import { QuotaNotice, StorageBanner } from '../components/Quota';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
 import { Roles, RulesStep } from './Setup';
@@ -36,6 +37,16 @@ export function Play({ code }: { code: string }) {
       </Screen>
     );
   }
+  if (status === 'quota') {
+    return (
+      <QuotaNotice
+        title="Phone games are paused"
+        body={`Today's free server allowance is used up. Phone games work again at ${formatClock(room.quotaResetAt ?? Date.now())}. Meanwhile you can still play on one phone.`}
+        action="Play on one phone"
+        onAction={() => location.assign('/')}
+      />
+    );
+  }
   if (status === 'needJoin') return <JoinForm code={code} onJoin={room.join} onRejoin={room.rejoin} error={room.error} />;
   if (!view || !view.you) {
     return (
@@ -55,6 +66,7 @@ export function Play({ code }: { code: string }) {
         <Header view={view} send={room.send} sound={sound} setSound={setSound} />
       )}
       <div className="flex flex-1 flex-col">
+        {room.storageFullUntil && !blackout && <StorageBanner>{`The server can't save games until ${formatClock(room.storageFullUntil)}. This game keeps going, but if every phone drops it may be lost.`}</StorageBanner>}
         {view.phase === 'lobby' && <Lobby view={view} send={room.send} />}
         {view.phase === 'reveal' && <RevealRole view={view} skin={skin} send={room.send} />}
         {view.phase === 'night' && <Night view={view} skin={skin} send={room.send} />}

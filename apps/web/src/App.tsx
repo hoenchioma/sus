@@ -13,7 +13,8 @@ import { Tv } from './screens/Tv';
 import { QuestPlay } from './screens/quest/QuestPlay';
 import { QuestTv } from './screens/quest/QuestTv';
 import { QuestLocal } from './screens/quest/QuestLocal';
-import { roomGame } from './lib/room';
+import { formatClock, QuotaError, roomGame } from './lib/room';
+import { QuotaNotice } from './components/Quota';
 
 export interface Saved {
   game: Game;
@@ -70,9 +71,27 @@ export function App() {
 /** Asks the server which game a room is before loading that game's screens. */
 function RoomGate({ code, tv }: { code: string; tv: boolean }) {
   const [game, setGame] = useState<'mafia' | 'quest' | null | undefined>(undefined);
+  const [quotaResetAt, setQuotaResetAt] = useState<number | null>(null);
   useEffect(() => {
-    roomGame(code).then(setGame).catch(() => setGame(null));
+    roomGame(code)
+      .then(setGame)
+      .catch((error) => {
+        if (error instanceof QuotaError) setQuotaResetAt(error.resetAt);
+        else setGame(null);
+      });
   }, [code]);
+  if (quotaResetAt !== null) {
+    // Which game the room holds is unknown here, so say it in both languages.
+    return (
+      <QuotaNotice
+        title="Phone games are paused · ফোনে খেলা আপাতত বন্ধ"
+        body={`Today's free server allowance is used up. Phone games work again at ${formatClock(quotaResetAt)}. Meanwhile you can still play on one phone. · ${formatClock(quotaResetAt, 'bn')}-এ আবার চালু হবে, এর মধ্যে এক ফোনে খেলা যাবে।`}
+        className="font-bangla"
+        action="Play on one phone · এক ফোনে খেলুন"
+        onAction={() => location.assign('/')}
+      />
+    );
+  }
   if (game === undefined) return null;
   if (game === 'quest') return tv ? <QuestTv code={code} /> : <QuestPlay code={code} />;
   return tv ? <Tv code={code} /> : <Play code={code} />;

@@ -4,7 +4,7 @@ import { quest } from '@sus/engine';
 import { QuestArt } from '../../art/QuestArt';
 import { Button } from '../../components/ui';
 import { unlockAudio, useQuestCues } from '../../lib/audio';
-import { useRoom, useSecondsLeft } from '../../lib/room';
+import { formatClock, useRoom, useSecondsLeft } from '../../lib/room';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, RejectionTrack, useQuestText, type QuestText } from './parts';
@@ -13,13 +13,20 @@ import { QuestAnnouncement } from './QuestPlay';
 type View = quest.QuestRoomView;
 
 export function QuestTv({ code }: { code: string }) {
-  const { view, status, clockOffset } = useRoom<View, quest.QuestCommand>(code, 'tv');
+  const { view, status, clockOffset, quotaResetAt, storageFullUntil } = useRoom<View, quest.QuestCommand>(code, 'tv');
   const text = useQuestText(view?.settings.skin ?? 'polashi');
   const [sound, setSound] = useState(false);
   useWakeLock();
   useQuestCues(view?.cue ?? null, { enabled: sound, skin: view?.settings.skin ?? 'polashi', lang: text.lang, lines: text.t.cues });
 
   if (status === 'missing') return <div className={`grid min-h-dvh place-items-center text-[3vw] font-black ${text.font}`}>{text.t.roomMissing(code)}</div>;
+  if (status === 'quota') {
+    return (
+      <div className={`grid min-h-dvh place-items-center p-[4vw] text-center text-[2.5vw] font-black ${text.font}`}>
+        {text.t.quotaBody(formatClock(quotaResetAt ?? Date.now(), text.lang))}
+      </div>
+    );
+  }
   if (!view) return <div className="grid min-h-dvh place-items-center text-[3vw] font-black">…</div>;
 
   return (
@@ -34,6 +41,11 @@ export function QuestTv({ code }: { code: string }) {
           </Button>
         )}
       </header>
+      {storageFullUntil && (
+        <p className="rounded-2xl bg-sun/15 px-[2vw] py-[0.8vw] text-center text-[1.4vw] font-bold text-sun">
+          {text.t.quotaBanner(formatClock(storageFullUntil, text.lang))}
+        </p>
+      )}
       <main className="flex flex-1 flex-col items-center justify-center">
         {view.phase === 'lobby' && <Lobby view={view} text={text} />}
         {view.phase === 'reveal' && <h1 className="text-[5vw] font-black">{text.t.holdToSee}</h1>}
