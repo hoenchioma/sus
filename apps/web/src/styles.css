@@ -1,0 +1,88 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/nunito';
+
+@theme {
+  --font-sans: 'Nunito Variable', ui-rounded, system-ui, sans-serif;
+
+  --color-night-950: #070a1c;
+  --color-night-900: #0b1026;
+  --color-night-800: #121a3d;
+  --color-night-700: #1a2453;
+  --color-night-600: #263270;
+  --color-night-500: #36438f;
+  --color-ink: #eef1ff;
+  --color-mist: #9aa3d6;
+  --color-haze: #6470b0;
+
+  --color-village: #3ee0c5;
+  --color-mafia: #ff5470;
+  --color-neutral: #b38cff;
+  --color-sun: #ffc857;
+  --color-sky: #5ab8ff;
+  --color-rose: #ff8fb8;
+
+  --radius-card: 1.75rem;
+
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+  --animate-twinkle: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-night-900);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  user-select: none;
+}
+
+input,
+textarea {
+  user-select: text;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-sky) 70%, transparent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
