@@ -26,21 +26,33 @@ For Mode 2 with hot reload, run `npm run dev:server` and `npm run dev` side by s
 
 ### Deploying (Mode 2)
 
-Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and each room is a Durable Object. It's live at https://sus.example.com (the custom domain is set in `apps/server/wrangler.jsonc`).
+Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and each room is a Durable Object. Anyone can deploy their own copy to their own Cloudflare account.
 
-**First deploy, from your machine:**
+**Settings** (environment variables, or a `.env` file at the repo root):
+
+| Variable | Required | Meaning |
+|---|---|---|
+| `DEPLOY_DOMAIN` | no | Hostname to serve on, e.g. `sus.example.com`. It must be in a zone on your Cloudflare account; Cloudflare creates the DNS record and certificate. Without it, the app is served on your `workers.dev` subdomain. |
+| `CLOUDFLARE_ACCOUNT_ID` | only with several accounts | Which account to deploy to. |
+| `CLOUDFLARE_API_TOKEN` | in CI | Not needed locally after `wrangler login`. |
+
+**From your machine:**
 
 ```bash
 npx -w @sus/server wrangler login
-npm run deploy
 ```
 
-Wrangler prints the live URLs. Check them with the simulated games: `BASE_URL=https://sus.example.com node e2e/run.mjs mafia`.
+```bash
+DEPLOY_DOMAIN=sus.example.com npm run deploy
+```
 
-**After that, from GitHub:** every push to `main` deploys automatically, then plays the simulated games against the live site. You can also run the Deploy workflow by hand from the Actions tab. It needs two repository secrets:
+It prints the live URL at the end. Check it with the simulated games: `BASE_URL=<that url> npm run e2e`.
 
-1. `CLOUDFLARE_API_TOKEN`: a token with Workers Scripts: Edit and Account Settings: Read on the account, plus Workers Routes: Edit, DNS: Edit and Zone: Read on example.com.
-2. `CLOUDFLARE_ACCOUNT_ID`: shown on the Workers & Pages overview page.
+**From GitHub:** every push to `main` deploys automatically, then plays the simulated games against the live site. You can also run the Deploy workflow by hand from the Actions tab. Under Settings → Secrets and variables → Actions, add:
+
+- **Secret `CLOUDFLARE_API_TOKEN`:** a token with Workers Scripts: Edit and Account Settings: Read on your account. With a custom domain, also Workers Routes: Edit, DNS: Edit and Zone: Read on that domain's zone.
+- **Secret `CLOUDFLARE_ACCOUNT_ID`:** shown on the Workers & Pages overview page.
+- **Variable `DEPLOY_DOMAIN`** (optional): as above.
 
 The workflow uses a `production` environment, so you can require an approval in the repo settings.
 
