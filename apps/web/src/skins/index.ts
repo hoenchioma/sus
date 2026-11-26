@@ -20,7 +20,7 @@ const mafia: Skin = {
   id: 'mafia',
   label: 'Mafia',
   roles: {
-    villager: { name: 'Villager', blurb: 'No powers. Just your wits and your vote.' },
+    villager: { name: 'Civilian', blurb: 'No powers. Just your wits and your vote.' },
     mafia: { name: 'Mafia', blurb: 'Choose someone to eliminate with your team each night.' },
     godfather: { name: 'Godfather', blurb: 'Leads the Mafia and has the final say on the kill.' },
     roleblocker: { name: 'Roleblocker', blurb: "Mafia. Cancel one player's ability each night." },
@@ -33,7 +33,7 @@ const mafia: Skin = {
     serialKiller: { name: 'Serial Killer', blurb: 'Kill every night. Win by being the last one standing.' },
     jester: { name: 'Jester', blurb: 'Get yourself voted out and you win.' },
   },
-  teams: { village: 'Village', mafia: 'Mafia', neutral: 'Neutral' },
+  teams: { village: 'Town', mafia: 'Mafia', neutral: 'Neutral' },
   prompts: {
     roleblocker: 'Roleblocker, who do you block?',
     mafia: 'Mafia, who do you eliminate?',
@@ -45,7 +45,7 @@ const mafia: Skin = {
     detective: 'Detective, who do you check?',
   },
   wins: {
-    village: 'The Village wins',
+    village: 'The Town wins',
     mafia: 'The Mafia wins',
     serialKiller: 'The Serial Killer wins',
     jester: 'The Jester wins',
