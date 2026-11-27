@@ -1,6 +1,7 @@
 // Deploys the Worker with wrangler. Set DEPLOY_DOMAIN (e.g. sus.example.com, a hostname in a zone on your
 // Cloudflare account) to serve it on a custom domain; without it, it's served on your workers.dev subdomain.
-// Variables can also go in a .env file at the repo root.
+// TV_APP_URL is where <site>/tv.apk sends people for the Fire TV app. Variables can also go in a .env
+// file at the repo root.
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +12,8 @@ if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
 
 const domain = process.env.DEPLOY_DOMAIN?.trim();
 const outputFile = join(mkdtempSync(join(tmpdir(), 'sus-deploy-')), 'output.ndjson');
-const args = ['wrangler', 'deploy', ...(domain ? ['--domain', domain] : [])];
+const tvApp = process.env.TV_APP_URL?.trim();
+const args = ['wrangler', 'deploy', ...(domain ? ['--domain', domain] : []), ...(tvApp ? ['--var', `TV_APP_URL:${tvApp}`] : [])];
 
 const { status } = spawnSync('npx', args, {
   cwd: new URL('..', import.meta.url),

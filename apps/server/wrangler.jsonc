@@ -7,11 +7,17 @@
     "directory": "../web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "run_worker_first": ["/api/*", "/tv.apk"]
   },
   "durable_objects": {
-    "bindings": [{ "name": "ROOMS", "class_name": "RoomObject" }]
+    "bindings": [
+      { "name": "ROOMS", "class_name": "RoomObject" },
+      { "name": "PAIRS", "class_name": "PairObject" }
+    ]
   },
-  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RoomObject"] }],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["RoomObject"] },
+    { "tag": "v2", "new_sqlite_classes": ["PairObject"] }
+  ],
   "observability": { "enabled": true }
 }

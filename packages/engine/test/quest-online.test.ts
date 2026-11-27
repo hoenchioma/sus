@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as mafia from '../src';
 import { quest, type Env, type Member } from '../src';
 
 const { applyQuest, createQuestRoom, joinQuest, questNextAlarm, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
@@ -195,5 +196,50 @@ describe('quest room timers', () => {
     tickQuest(r, env());
     expect(r.hostId).not.toBe(host);
     expect(r.hostId).toBe(members[3]!.id);
+  });
+});
+
+describe('switching games in one room', () => {
+  const { roomWithPeople } = mafia;
+  const people = (n: number) => {
+    const r = mafia.createRoom('SWAP', 0);
+    const env = (): Env => ({ now: 0, random: () => 0.5, id: () => `p${Math.random()}` });
+    const members = Array.from({ length: n }, (_, i) => mafia.join(r, `P${i}`, env()) as Member);
+    return { r, members };
+  };
+
+  it('keeps everyone, their tokens, the host and rejoin codes, both ways', () => {
+    const { r, members } = people(7);
+    r.hostId = members[2]!.id;
+    r.rejoinCodes = { ABCDE: members[4]!.id };
+    const q = quest.questRoomWithPeople(r, 'avalon') as QuestRoom;
+    expect(q.kind).toBe('quest');
+    expect(q.settings.skin).toBe('avalon');
+    expect(q.phase).toBe('lobby');
+    expect(q.members.map((m) => [m.id, m.token])).toEqual(members.map((m) => [m.id, m.token]));
+    expect(q.hostId).toBe(members[2]!.id);
+    expect(q.rejoinCodes).toEqual({ ABCDE: members[4]!.id });
+
+    const back = roomWithPeople(q);
+    expect('kind' in back).toBe(false);
+    expect(back.members.map((m) => m.id)).toEqual(members.map((m) => m.id));
+    expect(back.hostId).toBe(members[2]!.id);
+    // A Mafia lobby suggests roles for whoever is there, like it does when people join.
+    expect(Object.values(back.settings.counts).reduce((a, b) => a + (b ?? 0), 0)).toBe(7);
+  });
+
+  it('leaves absent players behind and hands the host on if they were one of them', () => {
+    const { r, members } = people(6);
+    members[0]!.absent = true;
+    members[0]!.connected = false;
+    r.hostId = members[0]!.id;
+    const q = quest.questRoomWithPeople(r) as QuestRoom;
+    expect(q.members).toHaveLength(5);
+    expect(q.hostId).toBe(members[1]!.id);
+  });
+
+  it('refuses to move more players into Polashi/Avalon than it supports', () => {
+    const { r } = people(16);
+    expect(quest.questRoomWithPeople(r)).toMatch(/at most 15 players/);
   });
 });

@@ -94,6 +94,10 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
           closed = true;
           setQuotaResetAt(msg.resetAt);
           setStatus('quota');
+        } else if (msg.type === 'gameChanged') {
+          // The host switched games; reloading brings this screen back in as the other game, using the saved token.
+          closed = true;
+          location.reload();
         } else if (msg.type === 'needJoin') {
           setStatus('needJoin');
         } else if (msg.type === 'joined') {
@@ -147,6 +151,7 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
     send: useCallback((command: C) => sendRaw({ type: 'command', command }), [sendRaw]),
     join: useCallback((name: string) => sendRaw({ type: 'join', name }), [sendRaw]),
     rejoin: useCallback((rejoinCode: string) => sendRaw({ type: 'rejoin', code: rejoinCode }), [sendRaw]),
+    switchGame: useCallback((game: 'mafia' | 'quest') => sendRaw({ type: 'switchGame', game }), [sendRaw]),
   };
 }
 

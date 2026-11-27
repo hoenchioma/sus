@@ -1,4 +1,4 @@
-import type { Env, Member } from '../mafia/online';
+import { peopleOf, type Env, type Member, type RoomPeople } from '../mafia/online';
 import { questBalance, type QuestBalance } from './balance';
 import { cardFaces, type QuestSkinId } from './cards';
 import {
@@ -141,6 +141,13 @@ function startTimer(room: QuestRoom, now: number) {
 }
 
 /* ---------- joining ---------- */
+
+/** A fresh Polashi/Avalon lobby holding the same people, so switching games doesn't make anyone rejoin. */
+export function questRoomWithPeople(people: RoomPeople, skin: QuestSkinId = 'polashi'): QuestRoom | string {
+  const carried = peopleOf(people);
+  if (carried.members.length > MAX_QUEST_PLAYERS) return `Polashi and Avalon take at most ${MAX_QUEST_PLAYERS} players`;
+  return Object.assign(createQuestRoom(people.code, people.createdAt, skin), carried);
+}
 
 export function joinQuest(room: QuestRoom, name: string, env: Env): Member | string {
   const clean = name.trim().slice(0, 20);

@@ -17,6 +17,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@csstools/postcss-cascade-layers": "^5.0.2",
     "@tailwindcss/vite": "^4.3.5",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.3.1",

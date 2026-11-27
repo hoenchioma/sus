@@ -8,12 +8,15 @@ import { unlockAudio, useCues } from '../lib/audio';
 import { promptName } from '../lib/describe';
 import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
 import { QuotaNotice, StorageBanner } from '../components/Quota';
+import { CONNECT_TV_EN, ConnectTv } from '../components/ConnectTv';
+import { GamePicker } from '../components/GamePicker';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
 import { Roles, RulesStep } from './Setup';
 import { AnnouncementCard } from '../components/Announcement';
 
 type Send = (cmd: Command) => void;
+type SwitchGame = (game: 'mafia' | 'quest') => void;
 
 export function Play({ code }: { code: string }) {
   const room = useRoom(code, 'player');
@@ -67,11 +70,11 @@ export function Play({ code }: { code: string }) {
       )}
       <div className="flex flex-1 flex-col">
         {room.storageFullUntil && !blackout && <StorageBanner>{`The server can't save games until ${formatClock(room.storageFullUntil)}. This game keeps going, but if every phone drops it may be lost.`}</StorageBanner>}
-        {view.phase === 'lobby' && <Lobby view={view} send={room.send} />}
+        {view.phase === 'lobby' && <Lobby view={view} send={room.send} switchGame={room.switchGame} />}
         {view.phase === 'reveal' && <RevealRole view={view} skin={skin} send={room.send} />}
         {view.phase === 'night' && <Night view={view} skin={skin} send={room.send} />}
         {view.phase === 'day' && <Day view={view} skin={skin} send={room.send} clockOffset={room.clockOffset} />}
-        {view.phase === 'over' && <Over view={view} skin={skin} send={room.send} />}
+        {view.phase === 'over' && <Over view={view} skin={skin} send={room.send} switchGame={room.switchGame} />}
       </div>
       {!blackout && <Announcements view={view} skin={skin} send={room.send} />}
       {room.error && (
@@ -285,7 +288,7 @@ function MenuSheet({ open, onClose, view, send }: { open: boolean; onClose: () =
   );
 }
 
-function Lobby({ view, send }: { view: RoomView; send: Send }) {
+function Lobby({ view, send, switchGame }: { view: RoomView; send: Send; switchGame: SwitchGame }) {
   const you = view.you!;
   const [tab, setTab] = useState<'roles' | 'rules' | 'game'>('roles');
   const [qr, setQr] = useState('');
@@ -323,6 +326,11 @@ function Lobby({ view, send }: { view: RoomView; send: Send }) {
 
   return (
     <div className="flex flex-col gap-4 animate-rise">
+      {you.isHost && (
+        <Card>
+          <GamePicker current="mafia" onPick={switchGame} label="Game" />
+        </Card>
+      )}
       <Card className="flex items-center gap-4">
         <div className="h-28 w-28 shrink-0 rounded-2xl bg-night-800 p-2" dangerouslySetInnerHTML={{ __html: qr }} />
         <div className="min-w-0">
@@ -331,6 +339,8 @@ function Lobby({ view, send }: { view: RoomView; send: Send }) {
           <div className="truncate text-xs text-mist">{location.host}/play/{view.code}</div>
         </div>
       </Card>
+
+      {you.isHost && !view.tvConnected && <ConnectTv room={view.code} text={CONNECT_TV_EN} />}
 
       <Card>
         <div className="mb-3 flex items-baseline justify-between">
@@ -807,7 +817,7 @@ function Stat({ label, value, highlight }: { label: string; value: number | stri
   );
 }
 
-function Over({ view, skin, send }: { view: RoomView; skin: Skin; send: Send }) {
+function Over({ view, skin, send, switchGame }: { view: RoomView; skin: Skin; send: Send; switchGame: SwitchGame }) {
   const skinId = view.settings.skin as SkinId;
   return (
     <div className="flex flex-col gap-3 animate-rise">
@@ -835,9 +845,14 @@ function Over({ view, skin, send }: { view: RoomView; skin: Skin; send: Send }) 
         </ul>
       </Card>
       {view.you!.isHost ? (
-        <Button className="h-14 text-lg" onClick={() => send({ type: 'admin', action: { kind: 'rematch' } })}>
-          Play again with this room
-        </Button>
+        <>
+          <Button className="h-14 text-lg" onClick={() => send({ type: 'admin', action: { kind: 'rematch' } })}>
+            Play again with this room
+          </Button>
+          <Button tone="ghost" onClick={() => switchGame('quest')}>
+            Play পলাশী · Avalon next
+          </Button>
+        </>
       ) : (
         <p className="text-center text-mist">Waiting for the host…</p>
       )}

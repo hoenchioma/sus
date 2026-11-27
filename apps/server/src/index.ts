@@ -4,6 +4,7 @@ import {
   createRoom,
   join,
   nextAlarm,
+  roomWithPeople,
   quest,
   setConnected,
   tick,
@@ -36,6 +37,9 @@ const games = {
 
 interface Env {
   ROOMS: DurableObjectNamespace<RoomObject>;
+  PAIRS: DurableObjectNamespace<PairObject>;
+  /** Where <site>/tv.apk points: the Fire TV app's download, set at deploy time. */
+  TV_APP_URL?: string;
   ASSETS: Fetcher;
 }
 
@@ -49,7 +53,8 @@ type ClientMessage =
   | { type: 'join'; name: string }
   | { type: 'rejoin'; code: string }
   | { type: 'ping' }
-  | { type: 'command'; command: unknown };
+  | { type: 'command'; command: unknown }
+  | { type: 'switchGame'; game: 'mafia' | 'quest' };
 
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -249,6 +254,20 @@ export class RoomObject extends DurableObject<Env> {
     }
 
     if (!att.playerId) return fail('Join the room first');
+
+    if (msg.type === 'switchGame') {
+      // One room for the whole evening: the host swaps games between rounds and nobody has to rejoin.
+      if (att.playerId !== room.hostId) return fail('Only the host can change the game');
+      if (room.phase !== 'lobby' && room.phase !== 'over') return fail('Finish this game first');
+      if (msg.game === (isQuest(room) ? 'quest' : 'mafia')) return;
+      const next = msg.game === 'quest' ? quest.questRoomWithPeople(room) : roomWithPeople(room);
+      if (typeof next === 'string') return fail(next);
+      this.room = next;
+      await this.save();
+      // Every screen reloads into the other game's layout; their saved tokens bring them straight back in.
+      for (const { ws: socket } of this.sockets()) socket.send(JSON.stringify({ type: 'gameChanged' }));
+      return;
+    }
     const error = games.apply(room, att.playerId, msg.command, env);
     if (error) fail(error);
     await this.commit();
@@ -299,6 +318,37 @@ export class RoomObject extends DurableObject<Env> {
   }
 }
 
+/**
+ * Lets a TV join a room without typing an address: the TV shows a short code and waits here on a
+ * socket, and the host's phone sends the room code to it. Nothing is stored.
+ */
+export class PairObject extends DurableObject<Env> {
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('Upgrade') === 'websocket') {
+      const pair = new WebSocketPair();
+      if (this.ctx.getWebSockets().length) {
+        // Another TV is already showing this code; it picks a fresh one.
+        pair[1].accept();
+        pair[1].send(JSON.stringify({ type: 'taken' }));
+        pair[1].close(4009, 'code taken');
+      } else {
+        this.ctx.acceptWebSocket(pair[1]);
+      }
+      return new Response(null, { status: 101, webSocket: pair[0] });
+    }
+    const { room } = (await request.json().catch(() => ({}))) as { room?: string };
+    if (!room || !/^[A-Z]{4}$/.test(room)) return json({ error: 'Bad room code' }, 400);
+    const tvs = this.ctx.getWebSockets();
+    if (!tvs.length) return json({ error: 'No TV is showing that code' }, 404);
+    for (const ws of tvs) ws.send(JSON.stringify({ type: 'paired', room }));
+    return json({ ok: true });
+  }
+
+  webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
+    if (message === 'ping') ws.send('pong');
+  }
+}
+
 function newCode() {
   return Array.from({ length: 4 }, () => CODE_LETTERS[Math.floor(Math.random() * CODE_LETTERS.length)]).join('');
 }
@@ -317,6 +367,17 @@ export default {
         if (res.status === 503) return res;
       }
       return json({ error: 'Could not create a room, try again' }, 503);
+    }
+
+    if (url.pathname === '/tv.apk') {
+      if (!env.TV_APP_URL) return new Response('The TV app is not published for this site.', { status: 404 });
+      return Response.redirect(env.TV_APP_URL, 302);
+    }
+
+    const pairing = url.pathname.match(/^\/api\/pair\/(\d{4})(\/ws)?$/);
+    if (pairing) {
+      const stub = env.PAIRS.get(env.PAIRS.idFromName(pairing[1]!));
+      return stub.fetch(new Request('https://pair/', request));
     }
 
     const match = url.pathname.match(/^\/api\/rooms\/([A-Za-z]{4})(\/ws)?$/);

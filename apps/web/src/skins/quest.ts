@@ -1,3 +1,4 @@
+import { CONNECT_TV_EN, type ConnectTvText } from '../components/ConnectTv';
 import type { quest } from '@sus/engine';
 
 export type QuestSkinId = quest.QuestSkinId;
@@ -194,6 +195,8 @@ export interface UiText {
   reason: Record<'chapters' | 'rejections' | 'guessed' | 'missed', (guesser: string, target: string) => string>;
   endedByHost: string;
   playAgain: string;
+  gameLabel: string;
+  switchToMafia: string;
   back: string;
   next: string;
   undo: string;
@@ -241,6 +244,7 @@ export interface UiText {
   quotaBody: (time: string) => string;
   quotaBanner: (time: string) => string;
   onePhone: string;
+  connectTv: ConnectTvText;
   home: string;
 }
 
@@ -286,6 +290,8 @@ const en: UiText = {
   },
   endedByHost: 'The host ended the game',
   playAgain: 'Play again with this room',
+  gameLabel: 'Game',
+  switchToMafia: 'Play Mafia · Werewolf next',
   back: 'Back',
   next: 'Next',
   undo: 'Undo last step',
@@ -348,6 +354,7 @@ const en: UiText = {
   quotaBody: (time) => `Today's free server allowance is used up. Phone games work again at ${time}. Meanwhile you can still play on one phone.`,
   quotaBanner: (time) => `The server can't save games until ${time}. This game keeps going, but if every phone drops it may be lost.`,
   onePhone: 'Play on one phone',
+  connectTv: CONNECT_TV_EN,
   home: 'Home',
   cues: {
     newCommander: 'A new Commander chooses a team.',
@@ -407,6 +414,8 @@ const bn: UiText = {
   },
   endedByHost: 'হোস্ট খেলা শেষ করেছেন',
   playAgain: 'এই রুমে আবার খেলুন',
+  gameLabel: 'খেলা',
+  switchToMafia: 'এরপর মাফিয়া · ওয়্যারউলফ খেলুন',
   back: 'পেছনে',
   next: 'পরের ধাপ',
   undo: 'শেষ ধাপ বাতিল',
@@ -469,6 +478,15 @@ const bn: UiText = {
   quotaBody: (time) => `আজকের ফ্রি সার্ভারের সীমা শেষ। ${time}-এ ফোনে খেলা আবার চালু হবে। এর মধ্যে এক ফোনে খেলা যাবে।`,
   quotaBanner: (time) => `${time} পর্যন্ত সার্ভার খেলা সেভ করতে পারবে না। খেলা চলছে, কিন্তু সবার কানেকশন কেটে গেলে খেলাটা হারিয়ে যেতে পারে।`,
   onePhone: 'এক ফোনে খেলুন',
+  connectTv: {
+    title: 'টিভিতে দেখান',
+    hint: (host) => `টিভিতে ${host}/tv খুলুন (বা Fire TV-তে Sus অ্যাপ), তারপর সেখানে দেখানো কোডটি দিন।`,
+    placeholder: 'টিভি কোড',
+    connect: 'যুক্ত করুন',
+    connected: 'টিভি যুক্ত হয়েছে',
+    noTv: 'এই কোডে কোনো টিভি পাওয়া যায়নি',
+    failed: 'টিভিতে পৌঁছানো গেল না, আবার চেষ্টা করুন।',
+  },
   home: 'হোম',
   cues: {
     newCommander: 'নতুন সেনাপতি দল বাছাই করবেন।',
