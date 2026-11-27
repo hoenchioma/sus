@@ -12,11 +12,23 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
   const [game, setGame] = useStored<'mafia' | 'quest'>('sus.homeGame', 'mafia');
   const [questSaved] = useStored<unknown>('sus.quest.game', null);
 
+  // Room codes are letters; the 4 digits a TV shows (at /tv) are a pairing code, so Host can send the new room there.
+  const tvCode = /^\d{4}$/.test(code) ? code : null;
+
   const host = async () => {
     setBusy(true);
     setError(null);
     try {
-      location.assign(`/play/${await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {})}`);
+      const room = await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {});
+      if (tvCode) {
+        const res = await fetch(`/api/pair/${tvCode}`, { method: 'POST', body: JSON.stringify({ room }) });
+        if (!res.ok) {
+          setError(res.status === 404 ? `No TV is showing ${tvCode}. Check the number on the TV.` : "Couldn't reach the TV. Try again.");
+          setBusy(false);
+          return;
+        }
+      }
+      location.assign(`/play/${room}`);
     } catch (e) {
       setError(
         e instanceof QuotaError
@@ -74,23 +86,29 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
             className="flex gap-2"
             onSubmit={(e) => {
               e.preventDefault();
-              if (code.trim().length === 4) location.assign(`/play/${code.trim().toUpperCase()}`);
+              if (/^[A-Z]{4}$/.test(code)) location.assign(`/play/${code}`);
             }}
           >
             <input
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/[^a-z]/gi, '').slice(0, 4).toUpperCase())}
+              onChange={(e) => {
+                const typed = e.target.value.toUpperCase();
+                setError(null);
+                // Either a room code (letters) or a TV's code (digits), never a mix.
+                setCode((/^\d/.test(typed) ? typed.replace(/\D/g, '') : typed.replace(/[^A-Z]/g, '')).slice(0, 4));
+              }}
               placeholder="CODE"
-              aria-label="Room code"
+              aria-label="Room code, or the code on a TV"
               className="min-h-12 w-28 rounded-2xl bg-night-700 px-4 text-center text-lg font-black tracking-widest text-ink outline-none ring-1 ring-white/10 placeholder:text-haze focus:ring-sky"
             />
-            <Button type="submit" tone="ghost" className="flex-1" disabled={code.length !== 4}>
+            <Button type="submit" tone="ghost" className="flex-1" disabled={!/^[A-Z]{4}$/.test(code)}>
               Join
             </Button>
             <Button type="button" className="flex-1" disabled={busy} onClick={host}>
               Host
             </Button>
           </form>
+          {tvCode && !error && <p className="mt-2 text-sm font-bold text-sky">📺 TV {tvCode}: tap Host and the game appears on that TV.</p>}
           {error && <p className="mt-2 text-sm font-bold text-mafia">{error}</p>}
         </div>
 

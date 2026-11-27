@@ -55,8 +55,11 @@ export function TvPair() {
         Sus<span className="text-mafia">.</span>
       </div>
       <div>
-        <p className="text-[2.2vw] font-bold text-mist">On the host's phone, tap Connect TV and enter</p>
-        <p className="font-bangla text-[1.8vw] text-haze">হোস্টের ফোনে টিভি যুক্ত করুন, তারপর এই কোডটি দিন</p>
+        <p className="text-[2.2vw] font-bold text-mist">
+          On your phone, open <span className="text-ink">{location.host}</span>, type this code and tap Host
+        </p>
+        <p className="text-[1.6vw] text-haze">Already hosting? Enter it under “Show it on a TV” in the lobby.</p>
+        <p className="mt-[0.8vw] font-bangla text-[1.7vw] text-haze">ফোনে {location.host} খুলে এই কোডটি লিখে Host চাপুন। লবিতে থাকলে “টিভিতে দেখান”-এ কোডটি দিন।</p>
       </div>
       <div className={`text-[13vw] font-black leading-none tracking-[0.15em] transition-opacity ${online ? '' : 'opacity-30'}`}>{code}</div>
       {!online && <p className="text-[1.6vw] font-bold text-haze">Connecting…</p>}
