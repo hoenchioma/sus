@@ -9,6 +9,7 @@ import { promptName } from '../lib/describe';
 import { formatClock, formatTime, useRoom, useSecondsLeft } from '../lib/room';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
+import { FullscreenButton } from '../components/FullscreenButton';
 
 export function Tv({ code }: { code: string }) {
   const { view, status, clockOffset, quotaResetAt, storageFullUntil } = useRoom(code, 'tv');
@@ -27,11 +28,14 @@ export function Tv({ code }: { code: string }) {
         <div className="text-[2.5vw] font-black">
           Sus<span className="text-mafia">.</span> <span className="text-mist">· {view.code}</span>
         </div>
-        {!sound && (
-          <Button tone="ghost" onClick={() => setSound(unlockAudio() || true)}>
-            🔊 Tap to turn on sound
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {!sound && (
+            <Button tone="ghost" onClick={() => setSound(unlockAudio() || true)}>
+              🔊 Tap to turn on sound
+            </Button>
+          )}
+          <FullscreenButton />
+        </div>
       </header>
       {storageFullUntil && (
         <p className="mt-[1vw] rounded-2xl bg-sun/15 px-[2vw] py-[0.8vw] text-center text-[1.4vw] font-bold text-sun">

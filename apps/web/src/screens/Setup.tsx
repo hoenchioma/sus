@@ -25,6 +25,7 @@ import type { Draft, Group } from '../App';
 import { RoleArt } from '../art/RoleArt';
 import { Button, Card, Chip, Screen, TEAM_TEXT } from '../components/ui';
 import { SKINS, type Skin, type SkinId } from '../skins';
+import { FullscreenButton } from '../components/FullscreenButton';
 
 const STEPS = ['Players', 'Roles', 'Rules', 'Deal'] as const;
 
@@ -89,6 +90,7 @@ export function SetupScreen({
             </button>
           ))}
         </div>
+        <FullscreenButton />
       </header>
 
       <div className="flex-1 animate-rise" key={step}>

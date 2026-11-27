@@ -26,6 +26,7 @@ import { Button, Card, Chip, Countdown, HoldButton, Screen, Sheet } from '../com
 import { deathLabel, describeEvents, nameOf, stepSummary } from '../lib/describe';
 import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin } from '../skins';
+import { FullscreenButton } from '../components/FullscreenButton';
 
 const CAUSE_TEXT: Record<string, string> = {
   mafia: 'killed at night',
@@ -73,6 +74,7 @@ export function Board({ saved, update, onQuit }: { saved: Saved; update: (game: 
           Players
           {v.issues.length > 0 && <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-sun" />}
         </button>
+        <FullscreenButton />
       </header>
 
       <div className="flex flex-1 flex-col gap-3 animate-rise" key={index}>
