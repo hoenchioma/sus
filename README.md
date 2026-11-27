@@ -71,7 +71,15 @@ To install it on a Fire TV:
 
 Updates install the same way, over the top.
 
-**Building it.** The Deploy workflow builds the APK for the deployed address and serves it at `/tv.apk` once these repository secrets exist:
+**Builds and releases.** The *Fire TV app* workflow builds the APK for the deployed address:
+
+| Trigger | What it publishes |
+|---|---|
+| Every push to `main` | Refreshes the rolling **`firetv-main`** pre-release. It follows `main`, like the site, and `<your site>/tv.apk` redirects to it. |
+| Pushing a version tag, e.g. `v1.2.0` | A versioned release with its own APK, kept on the Releases page. |
+| Run workflow (manual) | Same as a push to `main`, e.g. after changing `DEPLOY_DOMAIN`. |
+
+Every build gets a higher version number than the last, so any of them installs over whatever is on the TV. Release downloads need a public repository: the Fire TV can't sign in to GitHub. The workflow needs these repository secrets:
 
 | Secret | What it is |
 |---|---|

@@ -38,6 +38,8 @@ const games = {
 interface Env {
   ROOMS: DurableObjectNamespace<RoomObject>;
   PAIRS: DurableObjectNamespace<PairObject>;
+  /** Where <site>/tv.apk points: the Fire TV app's download, set at deploy time. */
+  TV_APP_URL?: string;
   ASSETS: Fetcher;
 }
 
@@ -365,6 +367,11 @@ export default {
         if (res.status === 503) return res;
       }
       return json({ error: 'Could not create a room, try again' }, 503);
+    }
+
+    if (url.pathname === '/tv.apk') {
+      if (!env.TV_APP_URL) return new Response('The TV app is not published for this site.', { status: 404 });
+      return Response.redirect(env.TV_APP_URL, 302);
     }
 
     const pairing = url.pathname.match(/^\/api\/pair\/(\d{4})(\/ws)?$/);
