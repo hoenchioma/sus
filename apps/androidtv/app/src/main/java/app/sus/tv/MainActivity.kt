@@ -52,7 +52,7 @@ class MainActivity : Activity() {
                     if (request.isForMainFrame) showOffline()
                 }
 
-                // Fire TV sticks are short on memory; if Android kills the page's renderer, start the page
+                // TV sticks are short on memory; if Android kills the page's renderer, start the page
                 // again instead of letting the whole app crash.
                 override fun onRenderProcessGone(view: WebView, detail: RenderProcessGoneDetail): Boolean {
                     view.destroy()
@@ -77,7 +77,7 @@ class MainActivity : Activity() {
     }
 
     /** Back leaves a game for the pairing screen, and only exits the app from there. */
-    @Deprecated("Still the simplest hook for the remote's Back button on every Fire OS version")
+    @Deprecated("Still the simplest hook for the remote's Back button on every Android TV version")
     override fun onBackPressed() {
         val web = web
         if (web != null && web.canGoBack()) web.goBack() else super.onBackPressed()

@@ -5,12 +5,12 @@ import { promptName } from './describe';
 
 declare global {
   interface Window {
-    /** Set by the Sus Fire TV app: Android's web view can't speak, so the app lends the TV's own voice. */
+    /** Set by the Sus Android TV app: Android's web view can't speak, so the app lends the TV's own voice. */
     SusTv?: { speak(text: string, lang: string): void };
   }
 }
 
-/** True inside the Fire TV app, which allows sound without a tap and speaks through the TV. */
+/** True inside the Android TV app, which allows sound without a tap and speaks through the TV. */
 export const inTvApp = typeof window !== 'undefined' && !!window.SusTv;
 
 let ctx: AudioContext | null = null;

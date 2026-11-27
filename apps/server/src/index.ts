@@ -38,7 +38,7 @@ const games = {
 interface Env {
   ROOMS: DurableObjectNamespace<RoomObject>;
   PAIRS: DurableObjectNamespace<PairObject>;
-  /** Where <site>/tv.apk points: the Fire TV app's download, set at deploy time. */
+  /** Where <site>/tv.apk points: the Android TV app's download, set at deploy time. */
   TV_APP_URL?: string;
   ASSETS: Fetcher;
 }

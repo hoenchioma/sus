@@ -14,7 +14,7 @@ const dvhFallback: PostcssPlugin = {
 };
 
 /**
- * TV browsers (Fire TV's web view, older smart TVs) can be Chromium 90 or so, which ignores every rule
+ * TV browsers (Android TV web views, older smart TVs) can be Chromium 90 or so, which ignores every rule
  * inside `@layer` — and Tailwind puts all of its CSS in layers. Flattening the layers in the shipped CSS
  * keeps the same cascade for modern browsers and lets older ones style the page at all.
  */
@@ -43,7 +43,7 @@ export default defineConfig({
     legacyCss(),
     VitePWA({
       registerType: 'autoUpdate',
-      // The Fire TV app download has to reach the server, not the offline copy of the web app.
+      // The Android TV app download has to reach the server, not the offline copy of the web app.
       workbox: { navigateFallbackDenylist: [/^\/api\//, /\.apk$/] },
       includeAssets: ['icon.svg'],
       manifest: {

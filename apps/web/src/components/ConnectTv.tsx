@@ -14,7 +14,7 @@ export interface ConnectTvText {
 
 export const CONNECT_TV_EN: ConnectTvText = {
   title: 'Show it on a TV',
-  hint: (host) => `Open ${host}/tv on the TV (or the Sus app on Fire TV) and type the code it shows.`,
+  hint: (host) => `Open ${host}/tv on the TV (or the Sus TV app) and type the code it shows.`,
   placeholder: 'TV code',
   connect: 'Connect',
   connected: 'TV connected',

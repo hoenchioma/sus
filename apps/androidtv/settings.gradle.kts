@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "sus-firetv"
+rootProject.name = "sus-androidtv"
 include(":app")
