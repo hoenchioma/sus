@@ -8,12 +8,14 @@ import { unlockAudio, useQuestCues } from '../../lib/audio';
 import { formatClock, useRoom, useSecondsLeft } from '../../lib/room';
 import { QuotaNotice, StorageBanner } from '../../components/Quota';
 import { ConnectTv } from '../../components/ConnectTv';
+import { GamePicker } from '../../components/GamePicker';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, LangToggle, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
 
 type View = quest.QuestRoomView;
 type Send = (cmd: quest.QuestCommand) => void;
+type SwitchGame = (game: 'mafia' | 'quest') => void;
 
 export function QuestPlay({ code }: { code: string }) {
   const room = useRoom<View, quest.QuestCommand>(code, 'player');
@@ -59,10 +61,10 @@ export function QuestPlay({ code }: { code: string }) {
       <Header view={view} text={text} send={room.send} sound={sound} setSound={setSound} />
       <div className="flex flex-1 flex-col gap-3">
         {room.storageFullUntil && <StorageBanner>{text.t.quotaBanner(formatClock(room.storageFullUntil, text.lang))}</StorageBanner>}
-        {view.phase === 'lobby' && <Lobby view={view} text={text} send={room.send} />}
+        {view.phase === 'lobby' && <Lobby view={view} text={text} send={room.send} switchGame={room.switchGame} />}
         {view.phase === 'reveal' && <Reveal view={view} text={text} send={room.send} />}
         {view.phase === 'game' && <Game view={view} text={text} send={room.send} clockOffset={room.clockOffset} />}
-        {view.phase === 'over' && <Over view={view} text={text} send={room.send} />}
+        {view.phase === 'over' && <Over view={view} text={text} send={room.send} switchGame={room.switchGame} />}
       </div>
       <QuestAnnouncement view={view} text={text} />
       {room.error && (
@@ -234,7 +236,7 @@ function Menu({ open, onClose, view, text, send }: { open: boolean; onClose: () 
   );
 }
 
-function Lobby({ view, text, send }: { view: View; text: QuestText; send: Send }) {
+function Lobby({ view, text, send, switchGame }: { view: View; text: QuestText; send: Send; switchGame: SwitchGame }) {
   const you = view.you!;
   const [qr, setQr] = useState('');
   const url = `${location.origin}/play/${view.code}`;
@@ -246,6 +248,11 @@ function Lobby({ view, text, send }: { view: View; text: QuestText; send: Send }
 
   return (
     <>
+      {you.isHost && (
+        <Card>
+          <GamePicker current="quest" onPick={switchGame} label={text.t.gameLabel} />
+        </Card>
+      )}
       <Card className="flex items-center gap-4">
         <div className="h-28 w-28 shrink-0 rounded-2xl bg-night-800 p-2" dangerouslySetInnerHTML={{ __html: qr }} />
         <div>
@@ -543,7 +550,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
   );
 }
 
-function Over({ view, text, send }: { view: View; text: QuestText; send: Send }) {
+function Over({ view, text, send, switchGame }: { view: View; text: QuestText; send: Send; switchGame: SwitchGame }) {
   const o = view.outcome!;
   const { t, terms } = text;
   return (
@@ -566,9 +573,14 @@ function Over({ view, text, send }: { view: View; text: QuestText; send: Send })
         </ul>
       </Card>
       {view.you!.isHost && (
-        <Button className="h-14 text-lg" onClick={() => send({ type: 'admin', action: { kind: 'rematch' } })}>
-          {t.playAgain}
-        </Button>
+        <>
+          <Button className="h-14 text-lg" onClick={() => send({ type: 'admin', action: { kind: 'rematch' } })}>
+            {t.playAgain}
+          </Button>
+          <Button tone="ghost" onClick={() => switchGame('mafia')}>
+            {t.switchToMafia}
+          </Button>
+        </>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import {
   createRoom,
   join,
   nextAlarm,
+  roomWithPeople,
   quest,
   setConnected,
   tick,
@@ -50,7 +51,8 @@ type ClientMessage =
   | { type: 'join'; name: string }
   | { type: 'rejoin'; code: string }
   | { type: 'ping' }
-  | { type: 'command'; command: unknown };
+  | { type: 'command'; command: unknown }
+  | { type: 'switchGame'; game: 'mafia' | 'quest' };
 
 const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -250,6 +252,20 @@ export class RoomObject extends DurableObject<Env> {
     }
 
     if (!att.playerId) return fail('Join the room first');
+
+    if (msg.type === 'switchGame') {
+      // One room for the whole evening: the host swaps games between rounds and nobody has to rejoin.
+      if (att.playerId !== room.hostId) return fail('Only the host can change the game');
+      if (room.phase !== 'lobby' && room.phase !== 'over') return fail('Finish this game first');
+      if (msg.game === (isQuest(room) ? 'quest' : 'mafia')) return;
+      const next = msg.game === 'quest' ? quest.questRoomWithPeople(room) : roomWithPeople(room);
+      if (typeof next === 'string') return fail(next);
+      this.room = next;
+      await this.save();
+      // Every screen reloads into the other game's layout; their saved tokens bring them straight back in.
+      for (const { ws: socket } of this.sockets()) socket.send(JSON.stringify({ type: 'gameChanged' }));
+      return;
+    }
     const error = games.apply(room, att.playerId, msg.command, env);
     if (error) fail(error);
     await this.commit();

@@ -244,6 +244,40 @@ export function setConnected(room: Room, playerId: PlayerId, connected: boolean,
   if (playerId === room.hostId) room.hostLostAt = connected ? null : now;
 }
 
+/** Who is in a room, independent of the game being played there. */
+export interface RoomPeople {
+  code: string;
+  createdAt: number;
+  members: Member[];
+  hostId: PlayerId | null;
+  hostLostAt: number | null;
+  rejoinCodes: Record<string, PlayerId>;
+  tvConnected: boolean;
+}
+
+/** The people to carry into the next game: everyone still around, with the host kept if they are. */
+export function peopleOf(room: RoomPeople): RoomPeople {
+  const members = room.members.filter((m) => !m.absent).map((m) => ({ ...m, absent: false }));
+  const hostStays = members.some((m) => m.id === room.hostId);
+  return {
+    code: room.code,
+    createdAt: room.createdAt,
+    members,
+    hostId: hostStays ? room.hostId : members.find((m) => m.connected)?.id ?? members[0]?.id ?? null,
+    hostLostAt: hostStays ? room.hostLostAt : null,
+    rejoinCodes: { ...room.rejoinCodes },
+    tvConnected: room.tvConnected,
+  };
+}
+
+/** A fresh Mafia lobby holding the same people, so switching games doesn't make anyone rejoin. */
+export function roomWithPeople(people: RoomPeople): Room {
+  const room = createRoom(people.code, people.createdAt);
+  Object.assign(room, peopleOf(people));
+  syncCounts(room);
+  return room;
+}
+
 function syncCounts(room: Room) {
   if (room.phase !== 'lobby') return;
   const total = Object.values(room.settings.counts).reduce((a, b) => a + (b ?? 0), 0);

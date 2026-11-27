@@ -195,6 +195,8 @@ export interface UiText {
   reason: Record<'chapters' | 'rejections' | 'guessed' | 'missed', (guesser: string, target: string) => string>;
   endedByHost: string;
   playAgain: string;
+  gameLabel: string;
+  switchToMafia: string;
   back: string;
   next: string;
   undo: string;
@@ -288,6 +290,8 @@ const en: UiText = {
   },
   endedByHost: 'The host ended the game',
   playAgain: 'Play again with this room',
+  gameLabel: 'Game',
+  switchToMafia: 'Play Mafia · Werewolf next',
   back: 'Back',
   next: 'Next',
   undo: 'Undo last step',
@@ -410,6 +414,8 @@ const bn: UiText = {
   },
   endedByHost: 'হোস্ট খেলা শেষ করেছেন',
   playAgain: 'এই রুমে আবার খেলুন',
+  gameLabel: 'খেলা',
+  switchToMafia: 'এরপর মাফিয়া · ওয়্যারউলফ খেলুন',
   back: 'পেছনে',
   next: 'পরের ধাপ',
   undo: 'শেষ ধাপ বাতিল',
