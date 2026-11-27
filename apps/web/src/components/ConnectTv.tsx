@@ -8,6 +8,7 @@ export interface ConnectTvText {
   connect: string;
   connected: string;
   noTv: string;
+  busy: (room: string) => string;
   failed: string;
 }
 
@@ -18,6 +19,7 @@ export const CONNECT_TV_EN: ConnectTvText = {
   connect: 'Connect',
   connected: 'TV connected',
   noTv: 'No TV is showing that code',
+  busy: (other) => `That TV is already showing room ${other}`,
   failed: "Couldn't reach the TV. Try again.",
 };
 
@@ -32,8 +34,13 @@ export function ConnectTv({ room, text, className = '' }: { room: string; text: 
     setMessage(null);
     try {
       const res = await fetch(`/api/pair/${code}`, { method: 'POST', body: JSON.stringify({ room }) });
-      setMessage(res.ok ? { ok: true, text: text.connected } : { ok: false, text: res.status === 404 ? text.noTv : text.failed });
-      if (res.ok) setCode('');
+      if (res.ok) {
+        const { room: shown } = (await res.json()) as { room: string };
+        setMessage(shown === room ? { ok: true, text: text.connected } : { ok: false, text: text.busy(shown) });
+        setCode('');
+      } else {
+        setMessage({ ok: false, text: res.status === 404 ? text.noTv : text.failed });
+      }
     } catch {
       setMessage({ ok: false, text: text.failed });
     }

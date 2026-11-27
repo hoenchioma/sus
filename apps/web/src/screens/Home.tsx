@@ -16,19 +16,12 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
   const tvCode = /^\d{4}$/.test(code) ? code : null;
 
   const host = async () => {
+    // Same as scanning the TV's QR code: join the TV's game, or start one on it.
+    if (tvCode) return location.assign(`/link/${tvCode}`);
     setBusy(true);
     setError(null);
     try {
-      const room = await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {});
-      if (tvCode) {
-        const res = await fetch(`/api/pair/${tvCode}`, { method: 'POST', body: JSON.stringify({ room }) });
-        if (!res.ok) {
-          setError(res.status === 404 ? `No TV is showing ${tvCode}. Check the number on the TV.` : "Couldn't reach the TV. Try again.");
-          setBusy(false);
-          return;
-        }
-      }
-      location.assign(`/play/${room}`);
+      location.assign(`/play/${await createRoom(game === 'quest' ? { game: 'quest', skin: 'polashi' } : {})}`);
     } catch (e) {
       setError(
         e instanceof QuotaError
@@ -108,7 +101,7 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
               Host
             </Button>
           </form>
-          {tvCode && !error && <p className="mt-2 text-sm font-bold text-sky">📺 TV {tvCode}: tap Host and the game appears on that TV.</p>}
+          {tvCode && !error && <p className="mt-2 text-sm font-bold text-sky">📺 TV {tvCode}: tap Host to play on that TV.</p>}
           {error && <p className="mt-2 text-sm font-bold text-mafia">{error}</p>}
         </div>
 

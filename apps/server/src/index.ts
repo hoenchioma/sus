@@ -323,6 +323,13 @@ export class RoomObject extends DurableObject<Env> {
  * socket, and the host's phone sends the room code to it. Nothing is stored.
  */
 export class PairObject extends DurableObject<Env> {
+  /**
+   * The room this TV was sent to. Whoever claims the code first decides it; anyone scanning the TV's code
+   * afterwards (or at the same moment) is pointed at the same room. Memory only: it only needs to last
+   * while people are gathering.
+   */
+  private linked: string | null = null;
+
   async fetch(request: Request): Promise<Response> {
     if (request.headers.get('Upgrade') === 'websocket') {
       const pair = new WebSocketPair();
@@ -332,16 +339,26 @@ export class PairObject extends DurableObject<Env> {
         pair[1].send(JSON.stringify({ type: 'taken' }));
         pair[1].close(4009, 'code taken');
       } else {
+        this.linked = null;
         this.ctx.acceptWebSocket(pair[1]);
       }
       return new Response(null, { status: 101, webSocket: pair[0] });
     }
+
+    if (request.method === 'GET') {
+      if (this.linked) return json({ room: this.linked });
+      return this.ctx.getWebSockets().length ? json({ room: null }) : json({ error: 'No TV is showing that code' }, 404);
+    }
+
     const { room } = (await request.json().catch(() => ({}))) as { room?: string };
     if (!room || !/^[A-Z]{4}$/.test(room)) return json({ error: 'Bad room code' }, 400);
+    // No await between this check and the claim below, so two phones can't both win.
+    if (this.linked) return json({ room: this.linked });
     const tvs = this.ctx.getWebSockets();
     if (!tvs.length) return json({ error: 'No TV is showing that code' }, 404);
+    this.linked = room;
     for (const ws of tvs) ws.send(JSON.stringify({ type: 'paired', room }));
-    return json({ ok: true });
+    return json({ room });
   }
 
   webSocketMessage(ws: WebSocket, message: string | ArrayBuffer) {
