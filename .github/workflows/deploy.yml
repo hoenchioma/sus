@@ -24,8 +24,8 @@ jobs:
       DEPLOY_DOMAIN: ${{ vars.DEPLOY_DOMAIN }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      # <site>/tv.apk redirects here: the Fire TV app built from main by the Fire TV app workflow.
-      TV_APP_URL: https://github.com/${{ github.repository }}/releases/download/firetv-main/sus-tv.apk
+      # <site>/tv.apk redirects here: the Android TV app built from main by the Android TV app workflow.
+      TV_APP_URL: https://github.com/${{ github.repository }}/releases/download/latest/sus-tv.apk
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -480,7 +480,7 @@ const bn: UiText = {
   onePhone: 'এক ফোনে খেলুন',
   connectTv: {
     title: 'টিভিতে দেখান',
-    hint: (host) => `টিভিতে ${host}/tv খুলুন (বা Fire TV-তে Sus অ্যাপ), তারপর সেখানে দেখানো কোডটি দিন।`,
+    hint: (host) => `টিভিতে ${host}/tv খুলুন (বা Sus টিভি অ্যাপ), তারপর সেখানে দেখানো কোডটি দিন।`,
     placeholder: 'টিভি কোড',
     connect: 'যুক্ত করুন',
     connected: 'টিভি যুক্ত হয়েছে',

@@ -1,6 +1,6 @@
 // Deploys the Worker with wrangler. Set DEPLOY_DOMAIN (e.g. sus.example.com, a hostname in a zone on your
 // Cloudflare account) to serve it on a custom domain; without it, it's served on your workers.dev subdomain.
-// TV_APP_URL is where <site>/tv.apk sends people for the Fire TV app. Variables can also go in a .env
+// TV_APP_URL is where <site>/tv.apk sends people for the Android TV app. Variables can also go in a .env
 // file at the repo root.
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdtempSync, readFileSync } from 'node:fs';

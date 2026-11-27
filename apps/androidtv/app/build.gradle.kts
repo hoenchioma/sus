@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         applicationId = "app.sus.tv"
-        // Fire OS 5 (Android 5.1) and up, which covers every Fire TV still getting updates.
+        // Android 5.1 and up, which covers the older TV sticks and boxes still in use.
         minSdk = 22
         targetSdk = 35
         versionCode = (System.getenv("SUS_VERSION_CODE") ?: "1").toInt()

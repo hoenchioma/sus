@@ -60,9 +60,9 @@ The workflow uses a `production` environment, so you can require an approval in 
 
 Open `<your site>/tv` on any big screen. It shows a 4-digit code; on the host's phone, the lobby's **Show it on a TV** card takes that code and sends the TV into the room. `<your site>/tv/CODE` still works directly.
 
-**Fire TV app.** Fire TV's browser works, but the app is nicer: it opens straight to the pairing code, plays the narrator and sounds without a tap (using the TV's own voice), and keeps the screen awake.
+**Android TV app.** The TV's browser works, but the app is nicer: it opens straight to the pairing code, plays the narrator and sounds without a tap (using the TV's own voice), and keeps the screen awake.
 
-To install it on a Fire TV:
+It runs on Android TV, Google TV and Fire TV. To install it on a Fire TV:
 
 1. Install **Downloader** from the Fire TV app store.
 2. Turn on developer options: Settings → My Fire TV → About, then click the device name 7 times.
@@ -71,39 +71,39 @@ To install it on a Fire TV:
 
 Updates install the same way, over the top.
 
-**Builds and releases.** The *Fire TV app* workflow builds the APK for the deployed address:
+**Builds and releases.** The *Android TV app* workflow builds the APK for the deployed address:
 
 | Trigger | What it publishes |
 |---|---|
-| Every push to `main` | Refreshes the rolling **`firetv-main`** pre-release. It follows `main`, like the site, and `<your site>/tv.apk` redirects to it. |
+| Every push to `main` | Refreshes the rolling **`latest`** pre-release. It follows `main`, like the site, and `<your site>/tv.apk` redirects to it. |
 | Pushing a version tag, e.g. `v1.2.0` | A versioned release with its own APK, kept on the Releases page. |
 | Run workflow (manual) | Same as a push to `main`, e.g. after changing `DEPLOY_DOMAIN`. |
 
-Every build gets a higher version number than the last, so any of them installs over whatever is on the TV. Release downloads need a public repository: the Fire TV can't sign in to GitHub. The workflow needs these repository secrets:
+Every build gets a higher version number than the last, so any of them installs over whatever is on the TV. Release downloads need a public repository: the TV can't sign in to GitHub. The workflow needs these repository secrets:
 
 | Secret | What it is |
 |---|---|
-| `FIRETV_KEYSTORE_BASE64` | The signing keystore, base64-encoded |
-| `FIRETV_KEYSTORE_PASSWORD` | Its password |
-| `FIRETV_KEY_ALIAS` | The key's alias |
-| `FIRETV_KEY_PASSWORD` | The key's password |
+| `ANDROID_TV_KEYSTORE_BASE64` | The signing keystore, base64-encoded |
+| `ANDROID_TV_KEYSTORE_PASSWORD` | Its password |
+| `ANDROID_TV_KEY_ALIAS` | The key's alias |
+| `ANDROID_TV_KEY_PASSWORD` | The key's password |
 
 Create the keystore once, keep a copy safe, and never change it. Android only installs an update signed with the same key as the installed app.
 
 ```bash
-keytool -genkeypair -keystore sus-firetv.jks -alias sus -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Sus"
+keytool -genkeypair -keystore sus-tv.jks -alias sus -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Sus"
 ```
 
 ```bash
-base64 -w0 sus-firetv.jks
+base64 -w0 sus-tv.jks
 ```
 
-The second command prints the value for `FIRETV_KEYSTORE_BASE64`.
+The second command prints the value for `ANDROID_TV_KEYSTORE_BASE64`.
 
 To build locally, you need JDK 17+ and the Android SDK:
 
 ```bash
-cd apps/firetv && SUS_URL=https://sus.example.com ./gradlew assembleDebug
+cd apps/androidtv && SUS_URL=https://sus.example.com ./gradlew assembleDebug
 ```
 
 A debug build can point at `wrangler dev`; from the Android emulator that's `SUS_URL=http://10.0.2.2:8787`.
@@ -112,6 +112,6 @@ A debug build can point at `wrangler dev`; from the Android emulator that's `SUS
 
 - `packages/engine` — pure TypeScript game logic (roles, night resolution, votes, win checks, house rules, balance meter). A game is a setup plus a list of steps; state is always derived by replaying the steps, which is what makes back/forward editing safe.
 - `apps/web` — React + Vite + Tailwind PWA (Mafia and Werewolf skins, SVG character art). Routes: `/` (home + Mode 1), `/play/CODE` (player phone), `/tv/CODE` (TV dashboard).
-- `apps/firetv` — the Fire TV app: a small Android wrapper around `/tv` that adds the TV's voice and keeps the screen on.
+- `apps/androidtv` — the Android TV app: a small Android wrapper around `/tv` that adds the TV's voice and keeps the screen on.
 - `apps/server` — Cloudflare Worker + `RoomObject` Durable Object. The room logic itself lives in `packages/engine/src/mafia/online.ts`; the server only holds sockets, persists the room and sends each client its own view.
 - Narration clips go in `apps/web/public/audio/<skin>/<cue>.mp3` (e.g. `wake-mafia.mp3`, `sleep-doctor.mp3`, `night.mp3`, `dawn.mp3`); until they exist the browser's voice reads the lines.

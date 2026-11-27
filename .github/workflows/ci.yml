@@ -55,7 +55,7 @@ jobs:
           name: e2e-screenshots
           path: e2e-artifacts
 
-  firetv-app:
+  androidtv-app:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -65,8 +65,8 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - name: Build the Fire TV app
-        working-directory: apps/firetv
+      - name: Build the Android TV app
+        working-directory: apps/androidtv
         run: ./gradlew --no-daemon assembleDebug
         env:
           SUS_URL: https://sus.example.com

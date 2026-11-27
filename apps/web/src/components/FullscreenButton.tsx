@@ -8,7 +8,7 @@ type WebkitElement = HTMLElement & { webkitRequestFullscreen?: () => void };
 const doc = document as WebkitDocument;
 const isFull = () => !!(document.fullscreenElement ?? doc.webkitFullscreenElement);
 
-/** Hides the browser's bars. Not shown where it can't work: iPhones (Add to Home Screen does it there) and the Fire TV app. */
+/** Hides the browser's bars. Not shown where it can't work: iPhones (Add to Home Screen does it there) and the Android TV app. */
 export function FullscreenButton({ className = '' }: { className?: string }) {
   const [full, setFull] = useState(isFull);
   useEffect(() => {
