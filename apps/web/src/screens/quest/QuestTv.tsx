@@ -9,6 +9,7 @@ import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, RejectionTrack, useQuestText, type QuestText } from './parts';
 import { QuestAnnouncement } from './QuestPlay';
+import { FullscreenButton } from '../../components/FullscreenButton';
 
 type View = quest.QuestRoomView;
 
@@ -35,11 +36,14 @@ export function QuestTv({ code }: { code: string }) {
         <div className="text-[2.5vw] font-black">
           {text.terms.game} <span className="text-mist">· {view.code}</span>
         </div>
-        {!sound && (
-          <Button tone="ghost" onClick={() => setSound(unlockAudio() || true)}>
-            🔊
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          {!sound && (
+            <Button tone="ghost" onClick={() => setSound(unlockAudio() || true)}>
+              🔊
+            </Button>
+          )}
+          <FullscreenButton />
+        </div>
       </header>
       {storageFullUntil && (
         <p className="rounded-2xl bg-sun/15 px-[2vw] py-[0.8vw] text-center text-[1.4vw] font-bold text-sun">

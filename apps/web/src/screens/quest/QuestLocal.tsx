@@ -9,6 +9,7 @@ import { useStored } from '../../lib/storage';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName, type QuestSkinId } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
+import { FullscreenButton } from '../../components/FullscreenButton';
 
 interface Draft {
   names: string[];
@@ -92,6 +93,7 @@ function SetupQuest({
           ‹
         </button>
         <h1 className="flex-1 text-3xl font-black">{text.terms.game}</h1>
+        <FullscreenButton />
       </header>
 
       <div className="flex flex-col gap-4">
@@ -321,6 +323,7 @@ function Board({ saved, setSaved, text, onExit }: { saved: Saved; setSaved: (s: 
         <Button tone="ghost" className="min-h-10 px-3 text-sm" disabled={!redo.length} onClick={forward}>
           {t.next} ›
         </Button>
+        <FullscreenButton />
       </header>
 
       <Card className="!p-4">

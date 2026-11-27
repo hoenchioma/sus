@@ -12,6 +12,7 @@ import { GamePicker } from '../../components/GamePicker';
 import { useWakeLock } from '../../lib/wakeLock';
 import { cardName } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, LangToggle, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
+import { FullscreenButton } from '../../components/FullscreenButton';
 
 type View = quest.QuestRoomView;
 type Send = (cmd: quest.QuestCommand) => void;
@@ -150,6 +151,7 @@ function Header({ view, text, send, sound, setSound }: { view: View; text: Quest
       <button className="h-10 rounded-full bg-night-700 px-4 text-sm font-bold" onClick={() => setMenu(true)}>
         ☰
       </button>
+      <FullscreenButton />
       <Menu open={menu} onClose={() => setMenu(false)} view={view} text={text} send={send} />
     </header>
   );

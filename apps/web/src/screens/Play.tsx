@@ -14,6 +14,7 @@ import { useWakeLock } from '../lib/wakeLock';
 import { SKINS, type Skin, type SkinId } from '../skins';
 import { Roles, RulesStep } from './Setup';
 import { AnnouncementCard } from '../components/Announcement';
+import { FullscreenButton } from '../components/FullscreenButton';
 
 type Send = (cmd: Command) => void;
 type SwitchGame = (game: 'mafia' | 'quest') => void;
@@ -164,6 +165,7 @@ function Header({ view, send, sound, setSound }: { view: RoomView; send: Send; s
       <button className="h-10 rounded-full bg-night-700 px-4 text-sm font-bold" onClick={() => setMenu(true)}>
         {you.isHost ? 'Host' : 'Menu'}
       </button>
+      <FullscreenButton />
       <MenuSheet open={menu} onClose={() => setMenu(false)} view={view} send={send} />
     </header>
   );

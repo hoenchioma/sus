@@ -4,6 +4,7 @@ import { Button, Screen } from '../components/ui';
 import { createRoom, formatClock, QuotaError } from '../lib/room';
 import { useStored } from '../lib/storage';
 import { QuestArt } from '../art/QuestArt';
+import { FullscreenButton } from '../components/FullscreenButton';
 
 export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean; onContinue: () => void; onNew: () => void }) {
   const [code, setCode] = useState('');
@@ -34,7 +35,10 @@ export function Home({ canContinue, onContinue, onNew }: { canContinue: boolean;
 
   return (
     <Screen className="justify-between">
-      <div className="mt-[8vh] flex flex-col items-center text-center animate-rise">
+      <div className="flex justify-end">
+        <FullscreenButton />
+      </div>
+      <div className="mt-[4vh] flex flex-col items-center text-center animate-rise">
         {game === 'mafia' ? (
           <div className="relative mb-2 flex -space-x-6">
             <RoleArt role="villager" className="h-24 w-24 translate-y-3 animate-float [animation-delay:-2s]" />
