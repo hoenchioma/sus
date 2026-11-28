@@ -1,9 +1,58 @@
 # Sus
 
-A helper app for in-person social deduction games (Mafia / Werewolf, with Avalon-style games planned).
+A helper app for in-person social deduction games: Mafia / Werewolf and Polashi / Avalon.
 
-- **Mode 1 — Host tracker:** one phone; the host runs the night out loud and the app tracks choices, deaths, votes, and lets you step back and forth.
+- **Mode 1 — Host tracker:** one phone; the host runs the game out loud and the app tracks choices, deaths, votes, and lets you step back and forth.
 - **Mode 2 — Everyone on their phone:** the app runs the game, with an optional TV dashboard.
+
+## Games
+
+### Mafia / Werewolf
+
+A hidden team kills one player each night; everyone else talks it out by day and votes someone out. The town wins by removing every killer; the Mafia wins once it matches the rest in number. For 5+ players (up to 20 on phones). The setup screen suggests a balanced mix for the player count and scores any mix you pick.
+
+The two games play by the same rules; only the names, art and narration differ. Each role is listed below as **Mafia name / Werewolf name**.
+
+| Role | Team | Power |
+|---|---|---|
+| **Civilian / Villager** | Town | No power: just your wits and your vote. |
+| **Mafia / Werewolf** | Mafia | Picks a victim with the rest of the team each night. |
+| **Godfather / Alpha Wolf** | Mafia | Leads the team and has the final say on the kill. Optionally looks innocent to the Detective. |
+| **Roleblocker / Witch** | Mafia | Cancels one player's power each night. |
+| **Doctor / Healer** | Town | Protects one player from being killed each night. |
+| **Detective / Seer** | Town | Checks one player each night: Mafia or not? |
+| **Bodyguard / Guardian** | Town | Guards one player and dies in their place if they're attacked. |
+| **Lover** | Town | Protects a partner each night. If the Lover dies at night, the partner dies too. The partner is named in the morning and can't vote that day. |
+| **Vigilante / Hunter** | Town | One shot at night, once per game. |
+| **Mayor / Elder** | Town | Can reveal themselves by day; from then on their vote counts twice. |
+| **Serial Killer / Lone Wolf** | Neutral | Kills every night; wins only as the last one standing. |
+| **Jester / Fool** | Neutral | Wins by getting voted out. |
+
+House rules cover what a death reveals, whether protectors must switch targets, self-protection, how many votes are needed and how ties are broken, ghost votes for the dead, and more. Presets: Classic, Beginner and Hidden roles. On phones, nights are either *quick tap* (everyone taps at once, so nobody can tell who has a power) or *narrated* (the TV or host phone calls each role in turn).
+
+### Polashi / Avalon
+
+Teams go on five missions. Each round a leader proposes a team and everyone votes on it. If the team is approved, its members secretly play Success or Betrayal, and one Betrayal sinks the mission (two on mission 4 with 7+ players). Three successes win it for the good side, unless the evil side then identifies their hidden informer. Three failures, or five rejected teams in a row, win it for evil. For 5–15 players (11–15 use a house table).
+
+**Polashi** retells the 1757 Battle of Plassey: the Nawab's loyalists against the East India Company (EIC) and its conspirators, in English or Bangla. **Avalon** is the classic Arthurian version. Each role is listed below as **Polashi name / Avalon name**.
+
+| Role | Side | Power |
+|---|---|---|
+| **Mir Madan / Merlin** | Good | Knows who is evil (except Ray Durlov / Mordred). Must guide without being found out. |
+| **Mohon Lal / Percival** | Good | Sees Mir Madan / Merlin, but Ghoseti Begum / Morgana looks the same. |
+| **Nawab's loyalist / Loyal Servant** | Good | No power. |
+| **Mir Jafar / Assassin** | Evil | Knows the evil team. If good wins three missions, gets one guess at Mir Madan / Merlin; a correct guess wins it for evil. |
+| **Ghoseti Begum / Morgana** | Evil | Appears as Mir Madan / Merlin to Mohon Lal / Percival. |
+| **Ray Durlov / Mordred** | Evil | Hidden from Mir Madan / Merlin. |
+| **Umichad / Oberon** | Evil | On the evil side, but unknown to them and they to him. |
+| **EIC conspirator / Minion of Mordred** | Evil | Knows the evil team; slips Betrayals into missions. |
+
+Mir Madan / Merlin and Mir Jafar / Assassin are always in play; the others are optional. In Polashi, each card also carries a named historical figure from the battle, such as Siraj-ud-Daulah or Robert Clive. This is just flavour and doesn't affect the rules. Optional rules:
+- **Spy / Lady of the Lake:** after missions 2–4, the holder secretly learns one player's side.
+- **Anonymous votes**
+- **Choosing the first leader:** host's pick or random.
+
+Presets: First game, Classic and Full.
 
 ## Development
 
