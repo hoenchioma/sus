@@ -27,6 +27,10 @@ export interface Member {
   connected: boolean;
   lastSeen: number;
   absent: boolean;
+  /** Random per-phone ID for stats, so the same phone can be recognised across games. */
+  device?: string;
+  /** Set by the simulated-game tests so their games can be left out of stats. */
+  test?: boolean;
 }
 
 export type CardKind = 'action' | 'predictDeath' | 'predictRole';
@@ -90,6 +94,16 @@ export interface Prediction {
   target: PlayerId;
 }
 
+/** One vote in a day's vote or runoff, kept for stats. */
+export interface Ballot {
+  day: number;
+  runoff: boolean;
+  voter: PlayerId;
+  /** `null` = skipped. */
+  target: PlayerId | null;
+  ghost?: boolean;
+}
+
 export interface Room {
   code: string;
   createdAt: number;
@@ -114,6 +128,15 @@ export interface Room {
   confirmRemove: { player: PlayerId; winner: Winner } | null;
   rejoinCodes: Record<string, PlayerId>;
   tvConnected: boolean;
+  /** Identifies one game in this room for stats; a new one each time roles are dealt. */
+  gameId?: string;
+  startedAt?: number;
+  /** Every day's ballots, by player ID (the view's `lastBallots` only holds the latest round, by name). */
+  ballots?: Ballot[];
+  /** Each Mafia member's kill vote per night. */
+  killVotes?: { night: number; by: PlayerId; target: PlayerId | null }[];
+  /** The server's note that this game's result has been saved to stats. */
+  recorded?: string;
 }
 
 export type Command =
@@ -428,6 +451,7 @@ function finishNight(room: Room, env: Env) {
       }
     }
   }
+  for (const [by, target] of Object.entries(night.mafiaVotes)) (room.killVotes ??= []).push({ night: night.number, by, target });
   room.steps.push(step);
   const after = gameState(room)!;
   const rules = rulesOf(setup);
@@ -526,6 +550,9 @@ function closeVote(room: Room, env: Env) {
     ...Object.entries(day.votes).map(([voter, target]) => ({ voter: memberName(room, voter), target: target === 'skip' ? null : memberName(room, target) })),
     ...Object.entries(day.ghostVotes).map(([voter, target]) => ({ voter: memberName(room, voter), target: memberName(room, target), ghost: true })),
   ];
+  const runoff = day.stage === 'runoff';
+  for (const [voter, target] of Object.entries(day.votes)) (room.ballots ??= []).push({ day: day.number, runoff, voter, target: target === 'skip' ? null : target });
+  for (const [voter, target] of Object.entries(day.ghostVotes)) (room.ballots ??= []).push({ day: day.number, runoff, voter, target, ghost: true });
   const top = tally[0];
   if (!top) return finishDay(room, [], env);
   const tiedTop = tally.filter((t) => t.votes === top.votes);
@@ -660,6 +687,10 @@ export function apply(room: Room, playerId: PlayerId, cmd: Command, env: Env): s
       room.steps = [];
       room.revealed = [];
       room.predictions = [];
+      room.ballots = [];
+      room.killVotes = [];
+      room.gameId = env.id();
+      room.startedAt = env.now;
       room.winner = null;
       room.endedByHost = false;
       room.phase = 'reveal';

@@ -7,6 +7,7 @@ import {
   gameState,
   goTo,
   join,
+  mafiaRoomRecord,
   newGame,
   nightPrompts,
   phaseOf,
@@ -30,6 +31,7 @@ import {
   type RuleChoices,
   type Step,
 } from '../src';
+import { expectAnonymous } from './helpers';
 
 const GAMES = Number(process.env.FUZZ_GAMES ?? 40);
 
@@ -216,6 +218,9 @@ function playOnline(seed: number) {
   const final = gameState(room)!;
   if (!room.endedByHost) expect(winnerOf(room.setup!, final, rulesOf(room.setup!))).toBe(room.winner);
   expect(unexpected).toEqual([]);
+  const record = mafiaRoomRecord(room, { endedAt: now })!;
+  expectAnonymous(record, room.members);
+  expect(record.seats.filter((s) => s.survived).length).toBe(room.setup!.players.filter((p) => final.alive[p.id]).length);
   return { players, style, winner: room.winner, loops };
 }
 

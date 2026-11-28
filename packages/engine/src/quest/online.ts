@@ -65,6 +65,11 @@ export interface QuestRoom {
   rejoinCodes: Record<string, PlayerId>;
   tvConnected: boolean;
   endedByHost: boolean;
+  /** Identifies one game in this room for stats; a new one each time roles are dealt. */
+  gameId?: string;
+  startedAt?: number;
+  /** The server's note that this game's result has been saved to stats. */
+  recorded?: string;
 }
 
 export type QuestCommand =
@@ -307,6 +312,8 @@ export function applyQuest(room: QuestRoom, playerId: PlayerId, cmd: QuestComman
       room.pendingPlays = {};
       room.endedByHost = false;
       room.announcement = null;
+      room.gameId = env.id();
+      room.startedAt = env.now;
       room.phase = 'reveal';
       return null;
     }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as mafia from '../src';
 import { quest, type Env, type Member } from '../src';
+import { expectAnonymous } from './helpers';
 
 const { applyQuest, createQuestRoom, joinQuest, questNextAlarm, questRoomState, setQuestConnected, tickQuest, viewQuest, knowledgeOf, sideOf } = quest;
 type QuestRoom = quest.QuestRoom;
@@ -172,6 +173,13 @@ describe('fuzz: quest rooms', () => {
       expectNoOverdueAlarm(questNextAlarm(r), env().now);
     }
     if (r.phase !== 'over') throw new Error(`seed ${seed} stuck: ${JSON.stringify(questRoomState(r)?.phase)}`);
+    const record = mafia.questRoomRecord(r, { endedAt: env().now })!;
+    expectAnonymous(record, members);
+    expect(record.winner).toBe(questRoomState(r)!.winner);
+    // The same game, uploaded as if it had been played on one phone, must pass the server's checks.
+    const upload = mafia.trackerRecord({ family: 'quest', id: `game-${seed}-xyz`, skin: r.settings.skin, setup: r.setup, steps: r.steps }, 1);
+    if (typeof upload === 'string') throw new Error(upload);
+    expect(upload.seats.map((s) => s.won)).toEqual(record.seats.map((s) => s.won));
     return questRoomState(r)!.reason;
   }
 
