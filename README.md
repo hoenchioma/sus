@@ -35,6 +35,7 @@ Mode 2 runs on Cloudflare's free tier. One Worker serves the app and `/api`, and
 | `DEPLOY_DOMAIN` | no | Hostname to serve on, e.g. `sus.example.com`. It must be in a zone on your Cloudflare account; Cloudflare creates the DNS record and certificate. Without it, the app is served on your `workers.dev` subdomain. |
 | `CLOUDFLARE_ACCOUNT_ID` | only with several accounts | Which account to deploy to. |
 | `CLOUDFLARE_API_TOKEN` | in CI | Not needed locally after `wrangler login`. |
+| `STATS_SECRET` | no | The key that scrambles player names in the [game stats](#game-stats). Only read when the Worker doesn't have one yet; otherwise the first deploy generates it. |
 
 **From your machine:**
 
@@ -50,11 +51,52 @@ It prints the live URL at the end. Check it with the simulated games: `BASE_URL=
 
 **From GitHub:** every push to `main` deploys automatically, then plays the simulated games against the live site. You can also run the Deploy workflow by hand from the Actions tab. Under Settings → Secrets and variables → Actions, add:
 
-- **Secret `CLOUDFLARE_API_TOKEN`:** a token with Workers Scripts: Edit and Account Settings: Read on your account. With a custom domain, also Workers Routes: Edit, DNS: Edit and Zone: Read on that domain's zone.
+- **Secret `CLOUDFLARE_API_TOKEN`:** a token with Workers Scripts: Edit, D1: Edit and Account Settings: Read on your account. With a custom domain, also Workers Routes: Edit, DNS: Edit and Zone: Read on that domain's zone. Without D1: Edit the site still deploys, just without game stats.
 - **Secret `CLOUDFLARE_ACCOUNT_ID`:** shown on the Workers & Pages overview page.
 - **Variable `DEPLOY_DOMAIN`** (optional): as above.
 
 The workflow uses a `production` environment, so you can require an approval in the repo settings.
+
+### Game stats
+
+Every finished game is saved, anonymously, to a Cloudflare D1 database called `sus-stats`, for studying how games play out and tuning the balance. That covers games played on everyone's phones and, when the phone is online, one-phone games. Players never see anything about it.
+
+**What's stored.** One row per game in `games` (game, player count, roles and rules, winner, how it ended, the full timeline) and one per seat in `game_players` (role, team, won, when and how they died, and counts such as votes against the Mafia). The schema, with every column explained, is in [`apps/server/migrations/0001_stats.sql`](apps/server/migrations/0001_stats.sql); the JSON columns are built in [`packages/engine/src/stats.ts`](packages/engine/src/stats.ts). Players appear by seat number, never by name:
+
+- **`name_code`**: a keyed hash of the name as typed, ignoring case and extra spaces. The same name gives the same code in every game, in both modes, so one person can be followed across games without their name being stored.
+- **`device_code`**: a keyed hash of a random ID each phone keeps, for phone games. It links games played on the same phone even under different names.
+
+Both use `STATS_SECRET` as the key. The first deploy generates it and stores it on the Worker, where later deploys leave it alone; Cloudflare never shows it again. If it changes, new codes stop matching old ones. To keep your own copy, set `STATS_SECRET` (in `.env` or as a GitHub secret) before the first deploy.
+
+Games from the simulated-game tests, including the smoke test after each deploy, have `is_test = 1`. Leave them out with `WHERE is_test = 0`.
+
+**Looking at it.** In the Cloudflare dashboard, open Storage & databases → D1 → `sus-stats` → Console and run SQL, for example:
+
+```sql
+-- How often each side wins, by player count
+SELECT family, players, winner, count(*) AS games FROM games WHERE is_test = 0 GROUP BY 1, 2, 3;
+
+-- Each player's record, and how often a town player votes for the Mafia
+SELECT name_code, count(*) AS games, round(avg(won), 2) AS win_rate,
+       sum(json_extract(stats, '$.votesOn_mafia')) * 1.0 / sum(json_extract(stats, '$.votes')) AS hit_rate
+FROM game_players JOIN games ON games.id = game_id
+WHERE is_test = 0 AND family = 'mafia' AND team = 'village'
+GROUP BY name_code ORDER BY games DESC;
+```
+
+**Exporting it.** Download everything as SQL, which loads into SQLite, pandas or R:
+
+```bash
+npx -w @sus/server wrangler d1 export sus-stats --remote --output sus-stats.sql
+```
+
+Or one query as JSON:
+
+```bash
+npx -w @sus/server wrangler d1 execute sus-stats --remote --json --command "SELECT * FROM game_players"
+```
+
+`npm run dev:server` keeps its own local database; use `--local` instead of `--remote` to look at it.
 
 ### TV screen
 
