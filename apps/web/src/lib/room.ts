@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Command, RoomView } from '@sus/engine';
+import { deviceId, isTestPhone } from './stats';
 
 type Status = 'connecting' | 'needJoin' | 'live' | 'missing' | 'quota';
 
@@ -149,8 +150,11 @@ export function useRoom<V = RoomView, C = Command>(code: string, as: 'player' | 
     quotaResetAt,
     storageFullUntil,
     send: useCallback((command: C) => sendRaw({ type: 'command', command }), [sendRaw]),
-    join: useCallback((name: string) => sendRaw({ type: 'join', name }), [sendRaw]),
-    rejoin: useCallback((rejoinCode: string) => sendRaw({ type: 'rejoin', code: rejoinCode }), [sendRaw]),
+    join: useCallback((name: string) => sendRaw({ type: 'join', name, device: deviceId(), test: isTestPhone() || undefined }), [sendRaw]),
+    rejoin: useCallback(
+      (rejoinCode: string) => sendRaw({ type: 'rejoin', code: rejoinCode, device: deviceId(), test: isTestPhone() || undefined }),
+      [sendRaw],
+    ),
     switchGame: useCallback((game: 'mafia' | 'quest') => sendRaw({ type: 'switchGame', game }), [sendRaw]),
   };
 }

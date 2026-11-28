@@ -4,7 +4,11 @@ import { mkdirSync } from 'node:fs';
 /** A phone-sized browser page that collects uncaught page errors. `lang` presets the Polashi/Avalon language. */
 export async function phone(browser, errors, lang = 'en') {
   const ctx = await browser.newContext({ ...devices['iPhone 13'] });
-  await ctx.addInitScript((l) => localStorage.setItem('sus.lang', JSON.stringify(l)), lang);
+  await ctx.addInitScript((l) => {
+    localStorage.setItem('sus.lang', JSON.stringify(l));
+    // Keeps these games out of the stats.
+    localStorage.setItem('sus.test', 'true');
+  }, lang);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (d) => d.accept());

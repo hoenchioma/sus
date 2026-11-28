@@ -17,11 +17,15 @@ import { formatClock, QuotaError, roomGame } from './lib/room';
 import { QuotaNotice } from './components/Quota';
 import { TvPair } from './screens/TvPair';
 import { LinkTv } from './screens/LinkTv';
+import { useReportGame } from './lib/stats';
 
 export interface Saved {
   game: Game;
   skin: SkinId;
   revealed: boolean;
+  /** For stats: identifies this game and when it began. Older saves don't have them. */
+  id?: string;
+  startedAt?: number;
 }
 
 export interface Draft {
@@ -123,6 +127,12 @@ function LocalApp() {
   const [screen, setScreen] = useState<'home' | 'setup' | 'play'>(saved ? 'play' : 'home');
 
   const update = (game: Game) => setSaved((s) => (s ? { ...s, game } : s));
+  const ended = saved?.game.ended ? saved : null;
+  const statsId = saved ? saved.id ?? `mafia-${saved.game.setup.players[0]?.id}` : '';
+  useReportGame(
+    ended && { family: 'mafia', id: statsId, skin: ended.skin, startedAt: ended.startedAt ?? null, game: ended.game },
+    ended ? `${statsId}:${ended.game.cursor}:${ended.game.ended}` : '',
+  );
 
   let content;
   if (screen === 'setup') {
@@ -134,7 +144,7 @@ function LocalApp() {
         setGroups={setGroups}
         onBack={() => setScreen('home')}
         onStart={(setup, revealed) => {
-          setSaved({ game: newGame(setup), skin: draft.skin, revealed });
+          setSaved({ game: newGame(setup), skin: draft.skin, revealed, id: crypto.randomUUID(), startedAt: Date.now() });
           setScreen('play');
         }}
       />

@@ -1,6 +1,6 @@
 // Simulated game tests: starts the local Worker, plays full games with bot-driven browser phones, then stops it.
 // Usage: node e2e/run.mjs mafia [more games...]   (set BASE_URL to test an already-running server)
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { mkdirSync, openSync } from 'node:fs';
 import { chromium } from 'playwright';
 
@@ -30,6 +30,8 @@ async function waitForServer(url, ms = 90_000) {
 
 let server;
 if (!process.env.BASE_URL) {
+  // The local stats database needs its tables before the first game ends.
+  spawnSync('npm', ['run', 'db:local', '-w', '@sus/server'], { stdio: 'ignore' });
   const log = openSync(`${artifacts}/server.log`, 'w');
   server = spawn('npx', ['wrangler', 'dev', '--port', String(PORT), '--ip', '127.0.0.1'], {
     cwd: new URL('../apps/server/', import.meta.url),

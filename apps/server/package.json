@@ -3,9 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "npm run db:local && wrangler dev",
     "deploy": "node scripts/deploy.mjs",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "db:local": "wrangler d1 migrations apply sus-stats --local"
   },
   "dependencies": {
     "@sus/engine": "*"

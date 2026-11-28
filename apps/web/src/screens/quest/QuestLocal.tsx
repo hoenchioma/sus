@@ -10,6 +10,7 @@ import { useWakeLock } from '../../lib/wakeLock';
 import { cardName, type QuestSkinId } from '../../skins/quest';
 import { ChapterTrack, CharacterReveal, QuestSettingsPanel, RejectionTrack, SeatList, useQuestText, type QuestText } from './parts';
 import { FullscreenButton } from '../../components/FullscreenButton';
+import { useReportGame } from '../../lib/stats';
 
 interface Draft {
   names: string[];
@@ -26,6 +27,9 @@ interface Saved {
   steps: quest.QuestStep[];
   /** Steps undone with Back, re-applied by Next. */
   redo: quest.QuestStep[];
+  /** For stats: identifies this game and when it began. Older saves don't have them. */
+  id?: string;
+  startedAt?: number;
 }
 
 const emptyDraft: Draft = { names: [], rules: {}, preset: 'first', skin: 'polashi', firstCommander: null };
@@ -47,7 +51,7 @@ export function QuestLocal() {
         onDeal={() => {
           const players = draft.names.map((name) => ({ id: crypto.randomUUID(), name }));
           const setup = quest.dealQuest(players, draft.rules, Math.random, quest.cardFaces(draft.skin), draft.firstCommander ?? undefined);
-          setSaved({ stage: 'reveal', skin: draft.skin, setup, steps: [], redo: [] });
+          setSaved({ stage: 'reveal', skin: draft.skin, setup, steps: [], redo: [], id: crypto.randomUUID(), startedAt: Date.now() });
         }}
       />
     );
@@ -297,6 +301,9 @@ function Board({ saved, setSaved, text, onExit }: { saved: Saved; setSaved: (s: 
   const n = setup.players.length;
   const { t, terms } = text;
   const nameOf = (id: string) => setup.players.find((p) => p.id === id)?.name ?? '?';
+  const over = state.phase === 'over';
+  const statsId = saved.id ?? `quest-${setup.players[0]?.id}`;
+  useReportGame(over ? { family: 'quest', id: statsId, skin: saved.skin, startedAt: saved.startedAt ?? null, setup, steps } : null, over ? `${statsId}:${steps.length}` : '');
 
   const commit = (step: quest.QuestStep) => {
     if (quest.questStepProblem(setup, state, step)) return;

@@ -19,5 +19,10 @@
     { "tag": "v1", "new_sqlite_classes": ["RoomObject"] },
     { "tag": "v2", "new_sqlite_classes": ["PairObject"] }
   ],
+  // Long-term game stats. The id here is only a placeholder for local development: deploys look the database up
+  // (or create it) by name and use its real id, so nothing account-specific is kept in the repo.
+  "d1_databases": [
+    { "binding": "STATS", "database_name": "sus-stats", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
+  ],
   "observability": { "enabled": true }
 }

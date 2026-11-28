@@ -3,18 +3,23 @@ import {
   apply,
   createRoom,
   join,
+  mafiaRoomRecord,
   nextAlarm,
   roomWithPeople,
   quest,
   setConnected,
+  questRoomRecord,
   tick,
+  trackerRecord,
   useRejoinCode,
   viewFor,
   type Command,
   type Env as GameEnv,
+  type GameRecord,
   type Member,
   type Room,
 } from '@sus/engine';
+import { isDeviceId, saveRecord, type StatsEnv } from './stats';
 
 type AnyRoom = Room | quest.QuestRoom;
 
@@ -35,7 +40,7 @@ const games = {
   view: (room: AnyRoom, viewer: string) => (isQuest(room) ? quest.viewQuest(room, viewer) : viewFor(room, viewer)),
 };
 
-interface Env {
+interface Env extends StatsEnv {
   ROOMS: DurableObjectNamespace<RoomObject>;
   PAIRS: DurableObjectNamespace<PairObject>;
   /** Where <site>/tv.apk points: the Android TV app's download, set at deploy time. */
@@ -50,8 +55,8 @@ interface Attachment {
 }
 
 type ClientMessage =
-  | { type: 'join'; name: string }
-  | { type: 'rejoin'; code: string }
+  | { type: 'join'; name: string; device?: string; test?: boolean }
+  | { type: 'rejoin'; code: string; device?: string; test?: boolean }
   | { type: 'ping' }
   | { type: 'command'; command: unknown }
   | { type: 'switchGame'; game: 'mafia' | 'quest' };
@@ -90,6 +95,7 @@ export class RoomObject extends DurableObject<Env> {
   private async save({ afterAlarm = false } = {}) {
     if (!this.room) return;
     this.room.tvConnected = this.sockets().some(({ att }) => att.tv);
+    const record = this.finishedGame();
     try {
       await this.writeRoom(afterAlarm);
       this.storageFull = false;
@@ -97,6 +103,23 @@ export class RoomObject extends DurableObject<Env> {
       if (!isQuotaError(error)) throw error;
       if (!this.storageFull) console.warn('storage quota used up; room continues from memory', { code: this.room.code });
       this.storageFull = true;
+    }
+    if (record) this.ctx.waitUntil(saveRecord(this.env, record).catch((error) => console.error('stats not saved', error)));
+  }
+
+  /** The record of a game that has just ended, once per ending (a game can end again after the host undoes a step). */
+  private finishedGame(): GameRecord | null {
+    const room = this.room!;
+    if (room.phase !== 'over' || !this.env.STATS) return null;
+    const key = `${room.gameId}:${room.steps.length}`;
+    if (room.recorded === key) return null;
+    room.recorded = key;
+    try {
+      const meta = { endedAt: Date.now() };
+      return isQuest(room) ? questRoomRecord(room, meta) : mafiaRoomRecord(room, meta);
+    } catch (error) {
+      console.error('stats record failed', error);
+      return null;
     }
   }
 
@@ -248,6 +271,9 @@ export class RoomObject extends DurableObject<Env> {
     if (msg.type === 'join' || msg.type === 'rejoin') {
       const result = msg.type === 'join' ? games.join(room, msg.name, env) : games.rejoin(room, msg.code, env) ?? 'That code is not valid';
       if (typeof result === 'string') return fail(result);
+      // A random ID from the phone, so the same phone can be recognised across games in the stats.
+      if (isDeviceId(msg.device)) result.device = msg.device;
+      if (msg.test === true) result.test = true;
       ws.serializeAttachment({ playerId: result.id, tv: false } satisfies Attachment);
       ws.send(JSON.stringify({ type: 'joined', token: result.token }));
       return this.commit();
@@ -384,6 +410,23 @@ export default {
         if (res.status === 503) return res;
       }
       return json({ error: 'Could not create a room, try again' }, 503);
+    }
+
+    if (url.pathname === '/api/stats/games' && request.method === 'POST') {
+      // A one-phone game, sent by the phone once it ends. Silent either way: the phone doesn't retry on errors.
+      const body = await request.text();
+      if (body.length > 100_000) return json({ error: 'Too big' }, 413);
+      let upload: unknown;
+      try {
+        upload = JSON.parse(body);
+      } catch {
+        return json({ error: 'Bad upload' }, 400);
+      }
+      const record = trackerRecord(upload, Date.now());
+      if (typeof record === 'string') return json({ error: record }, 400);
+      const device = (upload as { device?: unknown }).device;
+      await saveRecord(env, record, isDeviceId(device) ? device : null).catch((error) => console.error('stats not saved', error));
+      return new Response(null, { status: 204 });
     }
 
     if (url.pathname === '/tv.apk') {
