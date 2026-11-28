@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import QRCode from 'qrcode';
-import { teamOf, type CardView, type Command, type RoomView } from '@sus/engine';
+import { effectiveRules, teamOf, type CardView, type Command, type RoleId, type RoomView } from '@sus/engine';
 import { emptyDraft, type Draft } from '../App';
 import { CardBack, RoleArt } from '../art/RoleArt';
 import { Button, Card, Chip, HoldButton, Screen, Sheet, TEAM_TEXT } from '../components/ui';
@@ -15,8 +15,19 @@ import { SKINS, type Skin, type SkinId } from '../skins';
 import { Roles, RulesStep } from './Setup';
 import { AnnouncementCard } from '../components/Announcement';
 import { FullscreenButton } from '../components/FullscreenButton';
+import { RoleFace } from '../components/RoleCard';
+import { cardHint, roleGuide, voteHint } from '../lib/guide';
 
 type Send = (cmd: Command) => void;
+
+const rulesIn = (view: RoomView) => effectiveRules(view.settings.rules, view.settings.counts);
+
+function guideFor(view: RoomView, skin: Skin) {
+  const inPlay = new Set((Object.keys(view.settings.counts) as RoleId[]).filter((r) => (view.settings.counts[r] ?? 0) > 0));
+  return roleGuide(view.you!.role!, skin, rulesIn(view), inPlay, view.settings.nightStyle);
+}
+
+const teammateNames = (view: RoomView, skin: Skin) => view.you!.teammates.map((t) => `${t.name} (${skin.roles[t.role].name})`);
 type SwitchGame = (game: 'mafia' | 'quest') => void;
 
 export function Play({ code }: { code: string }) {
@@ -73,6 +84,7 @@ export function Play({ code }: { code: string }) {
         {room.storageFullUntil && !blackout && <StorageBanner>{`The server can't save games until ${formatClock(room.storageFullUntil)}. This game keeps going, but if every phone drops it may be lost.`}</StorageBanner>}
         {view.phase === 'lobby' && <Lobby view={view} send={room.send} switchGame={room.switchGame} />}
         {view.phase === 'reveal' && <RevealRole view={view} skin={skin} send={room.send} />}
+        {(view.phase === 'night' || view.phase === 'day') && !blackout && you.role && <RolePeek view={view} skin={skin} />}
         {view.phase === 'night' && <Night view={view} skin={skin} send={room.send} />}
         {view.phase === 'day' && <Day view={view} skin={skin} send={room.send} clockOffset={room.clockOffset} />}
         {view.phase === 'over' && <Over view={view} skin={skin} send={room.send} switchGame={room.switchGame} />}
@@ -443,13 +455,28 @@ function Setting({ label, hint, children }: { label: string; hint?: string; chil
   );
 }
 
+/** Lets a player check their role and how to play it at any point in the game. Hold, so nobody glances at it. */
+function RolePeek({ view, skin }: { view: RoomView; skin: Skin }) {
+  const [held, setHeld] = useState(false);
+  return (
+    <div className="mb-3">
+      <HoldButton onHold={setHeld} className="w-full touch-none select-none rounded-2xl bg-night-800 py-2 text-sm font-bold text-mist">
+        {held ? 'Release to hide' : 'Hold to see your role 👁'}
+      </HoldButton>
+      {held && (
+        <div className="mt-2 overflow-hidden rounded-[2rem] ring-1 ring-white/10 animate-rise">
+          <RoleFace role={view.you!.role!} skin={skin} guide={guideFor(view, skin)} teammates={teammateNames(view, skin)} />
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RevealRole({ view, skin, send }: { view: RoomView; skin: Skin; send: Send }) {
   const you = view.you!;
   const [held, setHeld] = useState(false);
   const [seen, setSeen] = useState(false);
   const role = you.role!;
-  const team = teamOf(role);
-  const skinId = view.settings.skin as SkinId;
   const waiting = view.players.filter((p) => !p.absent).length;
 
   return (
@@ -459,21 +486,12 @@ function RevealRole({ view, skin, send }: { view: RoomView; skin: Skin; send: Se
           setHeld(h);
           if (h) setSeen(true);
         }}
-        className="mt-2 w-full max-w-[16rem] touch-none select-none"
+        className="mt-2 w-full max-w-[18rem] touch-none select-none"
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[2rem] ring-1 ring-white/10">
+        {/* The face grows to fit the guide; the back keeps the card's shape. */}
+        <div className={`relative w-full overflow-hidden rounded-[2rem] ring-1 ring-white/10 ${held ? 'min-h-[24rem]' : 'aspect-[3/4]'}`}>
           {held ? (
-            <div className="flex h-full flex-col items-center justify-center bg-gradient-to-b from-night-600 to-night-800 p-5">
-              <RoleArt role={role} skin={skinId} className="h-32 w-32" />
-              <div className={`mt-2 text-xs font-black uppercase tracking-widest ${TEAM_TEXT[team]}`}>{skin.teams[team]}</div>
-              <div className="text-2xl font-black">{skin.roles[role].name}</div>
-              <p className="mt-2 text-sm text-mist">{skin.roles[role].blurb}</p>
-              {you.teammates.length > 0 && (
-                <p className="mt-3 text-sm font-bold text-mafia">
-                  Your team: {you.teammates.map((t) => `${t.name} (${skin.roles[t.role].name})`).join(', ')}
-                </p>
-              )}
-            </div>
+            <RoleFace role={role} skin={skin} guide={guideFor(view, skin)} teammates={teammateNames(view, skin)} />
           ) : (
             <div className="relative h-full">
               <CardBack className="h-full w-full" />
@@ -517,17 +535,14 @@ function NightCardPanel({ card, view, skin, send }: { card: CardView; view: Room
   }, [view.night?.mafiaVotes]);
   const mafia = card.kind === 'action' && card.key === 'mafia';
   const locked = !mafia && card.target !== undefined;
+  const you = view.you!;
+  // A lone Mafia member has no team votes to watch, so skip that hint for them.
+  const hint = mafia && you.teammates.length === 0 ? null : cardHint(card, skin, rulesIn(view), you.role === 'godfather' || you.teammates.some((t) => t.role === 'godfather'), view.night?.number ?? 1);
 
   return (
     <Card className="animate-rise">
       <div className="text-xl font-black leading-tight">{cardTitle(card, skin)}</div>
-      {mafia && view.you!.teammates.length > 0 && (
-        <p className="mt-1 text-xs text-mist">
-          {view.you!.teammates.some((t) => t.role === 'godfather') || view.you!.role === 'godfather'
-            ? `The ${skin.roles.godfather.name} has the final say.`
-            : 'Most votes wins; a tie is settled at random.'}
-        </p>
-      )}
+      {hint && <p className="mt-1 text-sm text-mist">{hint}</p>}
       <div className="mt-4 grid grid-cols-2 gap-2">
         {card.options.map((o) => {
           const voters = votesFor.get(o.name) ?? [];
@@ -730,6 +745,7 @@ function Day({ view, skin, send, clockOffset }: { view: RoomView; skin: Skin; se
           <p className="text-sm text-mist">
             {day.votesCast} of {day.voters} have voted. Votes are revealed together.
           </p>
+          <p className="mt-1 text-sm text-mist">{voteHint(rulesIn(view), day.stage, day.needed)}</p>
           {canVote ? (
             <div className="mt-4 grid grid-cols-2 gap-2">
               {options.map((p) => (

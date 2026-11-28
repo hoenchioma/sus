@@ -134,7 +134,15 @@ export function CharacterReveal({
       {quest.hasPower(role) && cardName(card, text.lang) !== text.terms.roleNames[role] && (
         <div className="text-sm font-bold text-mist">{text.terms.roleNames[role]}</div>
       )}
-      <p className="mt-2 text-sm text-mist">{text.terms.powers[role]}</p>
+      <p className="mt-2 text-sm font-bold text-ink/90">{text.terms.powers[role]}</p>
+      <ul className="mt-2 w-full space-y-1.5 text-left text-xs leading-snug text-mist">
+        <li>
+          🏆 <span className="font-bold">{text.t.howToWin}:</span> {text.terms.goals[side]}
+        </li>
+        <li>
+          💡 <span className="font-bold">{text.t.tip}:</span> {text.terms.tips[role]}
+        </li>
+      </ul>
       {knows && (
         <div className="mt-3 w-full rounded-2xl bg-night-800/80 p-3 text-left text-sm">
           {knows.kind === 'none' ? (

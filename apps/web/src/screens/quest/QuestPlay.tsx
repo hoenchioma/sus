@@ -422,6 +422,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
         (isCommander ? (
           <Card>
             <div className="text-xl font-black">{t.proposeTeam(size)}</div>
+            <p className="mt-1 text-sm text-mist">{t.hintPropose}</p>
             <div className="mt-3">
               <SeatList
                 players={view.players}
@@ -440,6 +441,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
         ) : (
           <Card>
             <p className="text-lg font-black">👑 {t.proposing(nameOf(b.commander), size)}</p>
+            <p className="mt-1 text-sm text-mist">{t.hintDiscuss(terms.commander)}</p>
             <div className="mt-3">
               <SeatList players={view.players} commander={b.commander} spy={b.spy} pastSpies={b.pastSpies} text={text} />
             </div>
@@ -452,6 +454,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
           <p className="text-sm text-mist">
             {terms.commander}: {nameOf(b.commander)} · {t.votesIn(b.votesIn, view.players.length)}
           </p>
+          <p className="mt-1 text-sm text-mist">{t.hintVote(terms.sides.evil)}</p>
           <div className="mt-3">
             <SeatList players={view.players} commander={b.commander} team={b.team} text={text} />
           </div>
@@ -496,7 +499,9 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
                     {terms.betrayal}
                   </button>
                 </div>
-                {you.side === 'good' && <p className="mt-2 text-center text-xs text-mist">{t.goodOnlySuccess}</p>}
+                <p className="mt-2 text-center text-xs text-mist">
+                  {you.side === 'good' ? t.goodOnlySuccess : t.hintBetray(terms.betrayal, b.doubleFail[b.chapter - 1] ?? false)}
+                </p>
               </>
             )}
           </Card>
@@ -510,6 +515,7 @@ function Game({ view, text, send, clockOffset }: { view: View; text: QuestText; 
         (b.spy === you.id ? (
           <Card>
             <div className="text-xl font-black">🕵️ {t.spyPick}</div>
+            <p className="mt-1 text-sm text-mist">{t.hintSpy}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {view.players
                 .filter((p) => p.id !== you.id && !b.pastSpies.includes(p.id))

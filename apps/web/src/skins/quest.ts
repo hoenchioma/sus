@@ -52,6 +52,10 @@ export interface QuestTerms {
   /** Character name that holds each power in this skin. */
   roleNames: Record<QuestRole, string>;
   powers: Record<QuestRole, string>;
+  /** How each side wins, in a sentence. */
+  goals: Record<Side, string>;
+  /** One tip per character for new players. */
+  tips: Record<QuestRole, string>;
 }
 
 const polashiEn: QuestTerms = {
@@ -83,6 +87,20 @@ const polashiEn: QuestTerms = {
     mordred: "Mir Madan can't see you. Hide in plain sight.",
     oberon: "You're on the EIC side, but you don't know them and they don't know you.",
     minion: 'You and the EIC know each other. Slip a Betrayal into the chapters.',
+  },
+  goals: {
+    good: 'You win if three chapters succeed, unless Mir Jafar then picks out Mir Madan.',
+    evil: 'You win if three chapters fail, if five teams in a row are rejected, or if Mir Jafar picks out Mir Madan at the end.',
+  },
+  tips: {
+    merlin: 'Steer the votes with gentle nudges, never certainty. If the EIC work out who you are, they win at the end.',
+    percival: 'Back the Mir Madan you think is real, and draw suspicion away from them.',
+    servant: 'Watch who approves teams that fail, and who keeps picking the same people.',
+    assassin: 'Watch who steers the votes a little too well: that is probably Mir Madan.',
+    morgana: 'Act as if you know things, so Mohon Lal trusts the wrong person.',
+    mordred: "Mir Madan can't warn anyone about you, so get yourself onto teams.",
+    oberon: "Play Betrayal when you're on a team, but you're on your own: the EIC don't know you're with them.",
+    minion: "You don't have to betray every time. A clean chapter can buy trust for later.",
   },
 };
 
@@ -116,6 +134,20 @@ const polashiBn: QuestTerms = {
     oberon: 'আপনি EIC-র পক্ষে, কিন্তু আপনি তাদের চেনেন না, তারাও আপনাকে চেনে না।',
     minion: 'আপনি আর EIC একে অপরকে চেনেন। অধ্যায়ে চুপিচুপি বিশ্বাসঘাতক কার্ড দিন।',
   },
+  goals: {
+    good: 'তিনটি অধ্যায় সফল হলে আপনারা জিতবেন, যদি না শেষে মীর জাফর মীর মদনকে চিনে ফেলেন।',
+    evil: 'তিনটি অধ্যায় ব্যর্থ হলে, পরপর পাঁচটি দল বাতিল হলে, অথবা শেষে মীর জাফর মীর মদনকে চিনে ফেললে আপনারা জিতবেন।',
+  },
+  tips: {
+    merlin: 'আলতো ইঙ্গিতে ভোট ঘোরান, কখনো নিশ্চিত ভাব দেখাবেন না। EIC আপনাকে চিনে ফেললে শেষে তারাই জিতবে।',
+    percival: 'যাকে আসল মীর মদন মনে হয় তার পাশে থাকুন, আর তার ওপর থেকে সন্দেহ সরিয়ে দিন।',
+    servant: 'কারা ব্যর্থ দলে সায় দেয় আর কারা বারবার একই লোকদের বেছে নেয়, খেয়াল করুন।',
+    assassin: 'কে একটু বেশিই নিখুঁতভাবে ভোট ঘোরাচ্ছে খেয়াল করুন: সে-ই সম্ভবত মীর মদন।',
+    morgana: 'এমন ভাব করুন যেন আপনি অনেক কিছু জানেন, যাতে মোহন লাল ভুল মানুষকে বিশ্বাস করেন।',
+    mordred: 'মীর মদন আপনার ব্যাপারে কাউকে সাবধান করতে পারবেন না, তাই দলে ঢোকার চেষ্টা করুন।',
+    oberon: 'দলে থাকলে বিশ্বাসঘাতক কার্ড দিন, তবে আপনি একা: EIC জানে না আপনি তাদের পক্ষে।',
+    minion: 'প্রতিবার বিশ্বাসঘাতকতা করতেই হবে না। একটি সফল অধ্যায় পরে বিশ্বাস কিনে দিতে পারে।',
+  },
 };
 
 const avalonEn: QuestTerms = {
@@ -147,6 +179,20 @@ const avalonEn: QuestTerms = {
     mordred: "Merlin can't see you. Hide in plain sight.",
     oberon: "You're evil, but you don't know the other Minions and they don't know you.",
     minion: 'You know your fellow Minions. Slip a Fail into the quests.',
+  },
+  goals: {
+    good: 'You win if three quests succeed, unless the Assassin then picks out Merlin.',
+    evil: 'You win if three quests fail, if five teams in a row are rejected, or if the Assassin picks out Merlin at the end.',
+  },
+  tips: {
+    merlin: 'Steer the votes with gentle nudges, never certainty. If evil works out who you are, they win at the end.',
+    percival: 'Back the Merlin you think is real, and draw suspicion away from them.',
+    servant: 'Watch who approves teams that fail, and who keeps picking the same people.',
+    assassin: 'Watch who steers the votes a little too well: that is probably Merlin.',
+    morgana: 'Act as if you know things, so Percival trusts the wrong person.',
+    mordred: "Merlin can't warn anyone about you, so get yourself onto quests.",
+    oberon: "Play Fail when you're on a quest, but you're on your own: the other Minions don't know you're with them.",
+    minion: "You don't have to fail every quest. A clean one can buy trust for later.",
   },
 };
 
@@ -183,6 +229,13 @@ export interface UiText {
   playCard: string;
   onTeamWaiting: string;
   goodOnlySuccess: string;
+  hintPropose: string;
+  hintDiscuss: (commander: string) => string;
+  hintVote: (evil: string) => string;
+  hintBetray: (betrayal: string, two: boolean) => string;
+  hintSpy: string;
+  howToWin: string;
+  tip: string;
   spyPick: string;
   spyWaiting: (spy: string) => string;
   spyResult: (target: string, side: string) => string;
@@ -273,6 +326,13 @@ const en: UiText = {
   playCard: 'Play your card in secret',
   onTeamWaiting: 'The team is playing their cards…',
   goodOnlySuccess: 'Your side can only play Success.',
+  hintPropose: 'Pick players you trust. Then everyone votes on your team.',
+  hintDiscuss: (c) => `Talk it out: tell the ${c} who you would trust.`,
+  hintVote: (evil) => `Approve if you trust this team. If five teams in a row are rejected, ${evil} win.`,
+  hintBetray: (b, two) => `${two ? `It takes two ${b} cards to fail this one.` : `One ${b} card is enough to fail this one.`} Cards are shuffled, so nobody sees who played what.`,
+  hintSpy: 'Only you will see which side they are on.',
+  howToWin: 'How to win',
+  tip: 'Tip',
   spyPick: 'Choose someone to inspect',
   spyWaiting: (s) => `${s} is inspecting someone…`,
   spyResult: (t, side) => `${t} is on the ${side} side.`,
@@ -397,6 +457,13 @@ const bn: UiText = {
   playCard: 'গোপনে আপনার কার্ড দিন',
   onTeamWaiting: 'দল কার্ড দিচ্ছে…',
   goodOnlySuccess: 'আপনার পক্ষ শুধু সফল কার্ড দিতে পারে।',
+  hintPropose: 'যাদের বিশ্বাস করেন তাদের বেছে নিন। তারপর সবাই আপনার দলের ওপর ভোট দেবে।',
+  hintDiscuss: (c) => `আলোচনা করুন: ${c}কে বলুন আপনি কাদের বিশ্বাস করেন।`,
+  hintVote: (evil) => `দলটিকে বিশ্বাস করলে সায় দিন। পরপর পাঁচটি দল বাতিল হলে ${evil} জিতবে।`,
+  hintBetray: (b, two) => `${two ? `এই অধ্যায় ব্যর্থ করতে দুটি ${b} কার্ড লাগবে।` : `একটি ${b} কার্ডই এই অধ্যায় ব্যর্থ করতে যথেষ্ট।`} কার্ডগুলো মিশিয়ে দেখানো হয়, তাই কে কোনটা দিয়েছে কেউ দেখে না।`,
+  hintSpy: 'তারা কোন পক্ষের, শুধু আপনিই দেখবেন।',
+  howToWin: 'কীভাবে জিতবেন',
+  tip: 'পরামর্শ',
   spyPick: 'কাকে পরীক্ষা করবেন বেছে নিন',
   spyWaiting: (s) => `${s} একজনকে পরীক্ষা করছেন…`,
   spyResult: (t, side) => `${t} ${side} পক্ষের।`,

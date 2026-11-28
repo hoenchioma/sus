@@ -369,6 +369,7 @@ function Propose({ setup, state, text, onCommit }: StepProps) {
   return (
     <Card>
       <div className="text-xl font-black">{text.t.proposing(setup.players.find((p) => p.id === state.commander)!.name, size)}</div>
+      <p className="mt-1 text-sm text-mist">{text.t.hintPropose}</p>
       <div className="mt-3">
         <SeatList
           players={setup.players}
@@ -397,6 +398,7 @@ function VoteEntry({ setup, state, text, onCommit }: StepProps) {
       <p className="text-sm text-mist">
         ⚔️ {(state.team ?? []).map((id) => setup.players.find((p) => p.id === id)!.name).join(', ')}
       </p>
+      <p className="mt-1 text-sm text-mist">{text.t.hintVote(text.terms.sides.evil)}</p>
       <div className="mt-3 flex gap-2">
         <Chip onClick={() => set(true)}>{text.t.everyone} 👍</Chip>
         <Chip onClick={() => set(false)}>{text.t.everyone} 👎</Chip>
@@ -449,7 +451,11 @@ function ChapterCards({ setup, state, text, onCommit }: StepProps) {
             🗡️ {terms.betrayal}
           </button>
         </div>
-        {good && held && <p className="mt-2 text-xs text-mist">{t.goodOnlySuccess}</p>}
+        {held && (
+          <p className="mt-2 text-xs text-mist">
+            {good ? t.goodOnlySuccess : t.hintBetray(terms.betrayal, quest.failsNeeded(setup.players.length, state.chapter) === 2)}
+          </p>
+        )}
       </Card>
     );
   }
@@ -494,6 +500,7 @@ function SpyCheck({ setup, state, text, onCommit }: StepProps) {
     <Card>
       <h2 className="text-2xl font-black">🕵️ {t.passTo(spyName)}</h2>
       <p className="text-mist">{t.spyPick}</p>
+      <p className="mt-1 text-sm text-mist">{t.hintSpy}</p>
       <div className="mt-3 grid grid-cols-2 gap-2">
         {setup.players
           .filter((p) => p.id !== state.spy && !state.pastSpies.includes(p.id))
