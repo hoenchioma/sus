@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { teamOf } from '@sus/engine';
+import { rulesOf, teamOf } from '@sus/engine';
 import type { Saved } from '../App';
-import { CardBack, RoleArt } from '../art/RoleArt';
-import { Button, HoldButton, Screen, TEAM_TEXT } from '../components/ui';
+import { CardBack } from '../art/RoleArt';
+import { RoleFace } from '../components/RoleCard';
+import { Button, HoldButton, Screen } from '../components/ui';
+import { roleGuide } from '../lib/guide';
 import { SKINS } from '../skins';
 
 export function Reveal({ saved, onDone }: { saved: Saved; onDone: () => void }) {
@@ -46,21 +48,17 @@ export function Reveal({ saved, onDone }: { saved: Saved; onDone: () => void }) 
           setHeld(h);
           if (h) setSeen(true);
         }}
-        className="mt-6 w-full max-w-[16rem] touch-none select-none"
+        className="mt-6 w-full max-w-[18rem] touch-none select-none"
       >
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-[2rem] ring-1 ring-white/10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)]">
+        {/* The face grows to fit the guide; the back keeps the card's shape. */}
+        <div className={`relative w-full overflow-hidden rounded-[2rem] ring-1 ring-white/10 shadow-[0_30px_60px_-30px_rgba(0,0,0,0.9)] ${held ? 'min-h-[24rem]' : 'aspect-[3/4]'}`}>
           {held ? (
-            <div className="flex h-full flex-col items-center justify-center bg-gradient-to-b from-night-600 to-night-800 p-5">
-              <RoleArt role={role} skin={saved.skin} className="h-32 w-32" />
-              <div className={`mt-2 text-xs font-black uppercase tracking-widest ${TEAM_TEXT[team]}`}>{skin.teams[team]}</div>
-              <div className="text-2xl font-black">{skin.roles[role].name}</div>
-              <p className="mt-2 text-sm text-mist">{skin.roles[role].blurb}</p>
-              {teammates.length > 0 && (
-                <p className="mt-3 text-sm font-bold text-mafia">
-                  Your team: {teammates.map((p) => `${p.name} (${skin.roles[setup.roles[p.id]!].name})`).join(', ')}
-                </p>
-              )}
-            </div>
+            <RoleFace
+              role={role}
+              skin={skin}
+              guide={roleGuide(role, skin, rulesOf(setup), new Set(Object.values(setup.roles)), 'tracker')}
+              teammates={teammates.map((p) => `${p.name} (${skin.roles[setup.roles[p.id]!].name})`)}
+            />
           ) : (
             <div className="relative h-full">
               <CardBack className="h-full w-full" />
